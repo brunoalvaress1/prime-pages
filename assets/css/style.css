@@ -127,7 +127,14 @@ h1 span { color: var(--accent); }
   justify-content: space-between;
   height: 76px;
 }
-.logo img { height: 46px; width: auto; }
+/* the logo file has large empty padding — crop to the artwork */
+.logo { display: inline-flex; align-items: center; }
+.logo img {
+  width: 178px;
+  height: 56px;
+  object-fit: cover;
+  object-position: center;
+}
 
 nav ul {
   display: flex;
@@ -617,7 +624,13 @@ nav a.nav-cta:hover { border-color: var(--accent); color: var(--accent); }
   gap: 32px;
   padding-bottom: 40px;
 }
-.footer-brand img { height: 40px; margin-bottom: 14px; }
+.footer-brand img {
+  width: 178px;
+  height: 56px;
+  object-fit: cover;
+  object-position: center;
+  margin: 0 0 10px -4px;
+}
 .footer-brand p { color: var(--muted); font-size: 0.9rem; max-width: 30ch; }
 .footer h4 {
   font-size: 0.78rem;
