@@ -588,13 +588,7 @@ nav a.nav-cta:hover { border-color: var(--accent); color: var(--accent); }
   color: var(--faint);
 }
 
-/* ---------- scroll reveal ---------- */
-.reveal {
-  opacity: 0;
-  transform: translateY(14px);
-  transition: opacity .5s var(--ease), transform .5s var(--ease);
-}
-.reveal.in { opacity: 1; transform: none; }
+/* ---------- .reveal kept as an inert hook (no content is ever hidden) ---------- */
 
 /* ---------- responsive ---------- */
 @media (max-width: 900px) {

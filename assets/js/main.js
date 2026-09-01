@@ -24,21 +24,3 @@ document.querySelectorAll(".faq-item").forEach((item) => {
   q.addEventListener("click", () => item.classList.toggle("open"));
 });
 
-// --- subtle scroll reveal ---
-const reveals = document.querySelectorAll(".reveal");
-if (reveals.length && "IntersectionObserver" in window) {
-  const obs = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("in");
-          obs.unobserve(entry.target);
-        }
-      });
-    },
-    { threshold: 0.12 }
-  );
-  reveals.forEach((el) => obs.observe(el));
-} else {
-  reveals.forEach((el) => el.classList.add("in"));
-}
