@@ -125,9 +125,9 @@ h1 span { color: var(--accent); }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 66px;
+  height: 76px;
 }
-.logo img { height: 30px; width: auto; }
+.logo img { height: 46px; width: auto; }
 
 nav ul {
   display: flex;
@@ -227,6 +227,55 @@ nav a.nav-cta:hover { border-color: var(--accent); color: var(--accent); }
   text-overflow: ellipsis;
 }
 .frame img { width: 100%; display: block; }
+
+/* ---------- hero art (abstract, no screenshot) ---------- */
+.hero-art { position: relative; }
+.hero-art-glow {
+  position: absolute;
+  inset: -14% -10%;
+  z-index: 0;
+  background: radial-gradient(58% 58% at 68% 32%, rgba(77, 124, 254, 0.30), transparent 72%);
+  filter: blur(34px);
+}
+.hero-art-window {
+  position: relative;
+  z-index: 1;
+  animation: heroFloat 5.5s ease-in-out infinite alternate;
+}
+@keyframes heroFloat {
+  from { transform: translateY(4px); }
+  to   { transform: translateY(-8px); }
+}
+.hero-art-ui {
+  background: var(--surface);
+  padding: 26px 24px 30px;
+  display: grid;
+  gap: 14px;
+}
+.hero-art-ui .ln { height: 12px; border-radius: 6px; background: var(--surface-2); }
+.hero-art-ui .ln-title {
+  height: 22px;
+  width: 60%;
+  background: linear-gradient(90deg, var(--accent), rgba(77, 124, 254, 0.25));
+}
+.hero-art-ui .ln-sub  { width: 85%; }
+.hero-art-ui .ln-row.short { width: 44%; }
+.hero-art-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 6px 0;
+}
+.hero-art-cards span {
+  height: 66px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.hero-art-cards span:nth-child(2) {
+  background: var(--accent-soft);
+  border-color: rgba(77, 124, 254, 0.35);
+}
 
 /* ---------- feature list (numbered, no icons) ---------- */
 .features {
@@ -568,7 +617,7 @@ nav a.nav-cta:hover { border-color: var(--accent); color: var(--accent); }
   gap: 32px;
   padding-bottom: 40px;
 }
-.footer-brand img { height: 28px; margin-bottom: 14px; }
+.footer-brand img { height: 40px; margin-bottom: 14px; }
 .footer-brand p { color: var(--muted); font-size: 0.9rem; max-width: 30ch; }
 .footer h4 {
   font-size: 0.78rem;
@@ -593,7 +642,7 @@ nav a.nav-cta:hover { border-color: var(--accent); color: var(--accent); }
 /* ---------- responsive ---------- */
 @media (max-width: 900px) {
   .hero-grid { grid-template-columns: 1fr; }
-  .hero-visual { order: -1; }
+  .hero-art { max-width: 420px; }
   .features { grid-template-columns: 1fr 1fr; }
   .split { grid-template-columns: 1fr; }
   .steps { grid-template-columns: 1fr 1fr; }
@@ -605,7 +654,7 @@ nav a.nav-cta:hover { border-color: var(--accent); color: var(--accent); }
 @media (max-width: 720px) {
   nav {
     position: absolute;
-    top: 66px;
+    top: 76px;
     left: 0;
     right: 0;
     background: var(--bg-2);
@@ -633,6 +682,7 @@ nav a.nav-cta:hover { border-color: var(--accent); color: var(--accent); }
   .footer-grid { grid-template-columns: 1fr; }
   .cta-band { padding: 30px 24px; }
   .contact-card, .split-card { padding: 26px 22px; }
+  .hero-visual { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
