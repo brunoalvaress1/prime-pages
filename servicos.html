@@ -3,36 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Serviços | O site ideal para o seu negócio</title>
+  <title>Serviços | Prime Page</title>
+  <meta name="description" content="Sites institucionais, landing pages, lojas online e sistemas de gestão sob medida — feitos à mão pela Prime Page.">
+  <link rel="icon" href="assets/img/logo prime.jpg">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
 
-  <!-- FUNDO ANIMADO -->
-  <div class="bg-orbs">
-    <span class="orb orb-1"></span>
-    <span class="orb orb-2"></span>
-    <span class="orb orb-3"></span>
-    <span class="orb orb-4"></span>
-  </div>
-
   <header class="header">
     <div class="container header-content">
-      <a href="index.html" class="logo">
-        <img src="assets/img/logo prime.jpg" style="width: 150px; height: auto;" alt="Prime Page">
-       
-      </a>
-
-      <div class="nav-toggle">
-        <span></span><span></span><span></span>
-      </div>
-
+      <a href="index.html" class="logo"><img src="assets/img/logo prime.jpg" alt="Prime Page"></a>
+      <button class="nav-toggle" aria-label="Abrir menu"><span></span><span></span><span></span></button>
       <nav>
         <ul>
-          <li><a href="index.html" class="active">Início</a></li>
+          <li><a href="index.html">Início</a></li>
           <li><a href="sobre.html">Sobre</a></li>
-          <li><a href="servicos.html">Serviços</a></li>
-          <li><a href="portfolio.html">Portfólio</a></li>
+          <li><a href="servicos.html" class="active">Serviços</a></li>
+          <li><a href="portfolio.html">Projetos</a></li>
           <li><a href="contato.html" class="nav-cta">Fale com a gente</a></li>
         </ul>
       </nav>
@@ -40,214 +27,149 @@
   </header>
 
   <!-- HERO -->
-  <section class="page-hero">
-    <div class="container services-hero-grid">
-      <div class="services-hero-text">
-        <span class="hero-tag">Nossos Serviços</span>
-        <h1>Sites profissionais criados para gerar confiança e aumentar seus contatos.</h1>
-        <p>Escolha o formato ideal para o seu negócio. Todos são rápidos, modernos e com foco total em conversão.</p>
+  <section class="hero">
+    <div class="container">
+      <span class="eyebrow">Serviços</span>
+      <h1>O site ou sistema certo para o <span>momento do seu negócio</span>.</h1>
+      <p class="lead">Todo projeto é feito à mão, rápido e pensado para gerar resultado.</p>
+      <div class="hero-actions">
+        <a href="https://wa.me/5519998839704" class="btn btn-primary">Pedir orçamento</a>
       </div>
+    </div>
+  </section>
 
-      <div class="services-hero-highlight">
-        <h3>O que todos os nossos sites têm:</h3>
+  <!-- FORMATOS DE SITE -->
+  <section class="section reveal">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Sites</span>
+        <h2 class="section-title">Formatos de site</h2>
+        <p class="lead">Todos incluem layout exclusivo, botão de WhatsApp, SEO e responsividade.</p>
+      </div>
+      <div class="features">
+        <div class="feature">
+          <span class="idx">01</span>
+          <h3>Landing Page</h3>
+          <p>Uma página, um objetivo. Ideal para divulgar um serviço principal ou uma campanha de anúncios.</p>
+        </div>
+        <div class="feature">
+          <span class="idx">02</span>
+          <h3>Site Institucional</h3>
+          <p>Várias páginas para apresentar a empresa com credibilidade e melhor posicionamento no Google.</p>
+        </div>
+        <div class="feature">
+          <span class="idx">03</span>
+          <h3>Loja / Catálogo</h3>
+          <p>Vitrine de produtos online com pedido ou contato direto pelo WhatsApp.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SISTEMAS -->
+  <section class="section section-alt reveal">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Destaque</span>
+        <h2 class="section-title">Sistemas sob medida</h2>
+        <p class="lead">
+          Quando caderno e planilha não dão mais conta, a gente constrói o sistema que organiza
+          a operação — do estoque à emissão de nota.
+        </p>
+      </div>
+      <div class="features">
+        <div class="feature"><span class="idx">—</span><h3>Controle de estoque</h3><p>Entradas, saídas e alertas de nível baixo.</p></div>
+        <div class="feature"><span class="idx">—</span><h3>Ordens de serviço</h3><p>Abertura, acompanhamento e histórico por cliente.</p></div>
+        <div class="feature"><span class="idx">—</span><h3>Emissão de notas fiscais</h3><p>Geração e impressão a partir do próprio sistema.</p></div>
+        <div class="feature"><span class="idx">—</span><h3>Controle de frota</h3><p>Manutenções, custos e status de cada veículo.</p></div>
+        <div class="feature"><span class="idx">—</span><h3>Painéis e relatórios</h3><p>Números do negócio em uma tela só.</p></div>
+        <div class="feature"><span class="idx">—</span><h3>Integrações</h3><p>WhatsApp, planilhas e outras ferramentas que você já usa.</p></div>
+      </div>
+      <div style="margin-top:36px;">
+        <a href="https://wa.me/5519998839704" class="btn btn-primary">Falar sobre um sistema</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section class="section reveal">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Como funciona</span>
+        <h2 class="section-title">Do primeiro contato ao projeto no ar.</h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <span class="num">Briefing</span>
+          <h3>Entender o negócio</h3>
+          <p>Conversa rápida sobre a empresa e o objetivo do projeto.</p>
+        </div>
+        <div class="step">
+          <span class="num">Proposta</span>
+          <h3>Escopo e layout</h3>
+          <p>Prazo, escopo e desenho das telas definidos antes de programar.</p>
+        </div>
+        <div class="step">
+          <span class="num">Desenvolvimento</span>
+          <h3>Colocar de pé</h3>
+          <p>Programação do site ou sistema, responsivo e testado.</p>
+        </div>
+        <div class="step">
+          <span class="num">Entrega</span>
+          <h3>No ar e suporte</h3>
+          <p>Publicação com domínio configurado e suporte inicial.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="section-tight reveal">
+    <div class="container">
+      <div class="cta-band">
+        <div>
+          <h2>Não sabe qual formato escolher?</h2>
+          <p>Descreve o que precisa que a gente indica o melhor caminho.</p>
+        </div>
+        <a href="contato.html" class="btn btn-primary">Falar com a Prime Page</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <img src="assets/img/logo prime.jpg" alt="Prime Page">
+        <p>Sites e sistemas sob medida para negócios de Leme e região.</p>
+      </div>
+      <div>
+        <h4>Navegação</h4>
         <ul>
-          <li>✔ Layout exclusivo</li>
-          <li>✔ Contato via WhatsApp</li>
-          <li>✔ SEO para aparecer no Google</li>
-          <li>✔ Velocidade e responsividade</li>
-          <li>✔ Identidade visual alinhada à sua marca</li>
+          <li><a href="index.html">Início</a></li>
+          <li><a href="sobre.html">Sobre</a></li>
+          <li><a href="servicos.html">Serviços</a></li>
+          <li><a href="portfolio.html">Projetos</a></li>
+          <li><a href="contato.html">Contato</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contato</h4>
+        <ul>
+          <li><a href="https://wa.me/5519998839704">WhatsApp (19) 99883-9704</a></li>
+          <li><a href="mailto:primepagesleme@gmail.com">primepagesleme@gmail.com</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Social</h4>
+        <ul>
+          <li><a href="https://www.instagram.com/primepages_leme" target="_blank" rel="noopener">Instagram</a></li>
         </ul>
       </div>
     </div>
-  </section>
-
-  <!-- TIPOS DE SITES -->
-  <section class="section">
-    <div class="container">
-      <h2 class="section-title">Qual tipo de site você precisa?</h2>
-      <p class="section-subtitle">Pouco texto, direto ao ponto — mas com tudo que você precisa saber.</p>
-
-      <div class="service-types-grid">
-        
-        <!-- ITEM 1 -->
-        <div class="st-item">
-          <div class="st-icon"></div>
-          <h3>Landing Page</h3>
-          <p class="st-desc">Perfeita para um serviço principal ou campanha específica.</p>
-
-          <div class="st-features">
-            <span>1 página estratégica</span>
-            <span>WhatsApp e formulário</span>
-            <span>Alta conversão</span>
-          </div>
-
-          <a href="contato.html" class="btn btn-primary st-btn">Quero este formato</a>
-        </div>
-
-        <!-- ITEM 2 -->
-        <div class="st-item st-item-highlight">
-          <div class="st-icon"></div>
-          <h3>Site Institucional</h3>
-          <p class="st-desc">Para empresas que precisam se apresentar com clareza e profissionalismo.</p>
-
-          <div class="st-features">
-            <span>Múltiplas páginas</span>
-            <span>SEO avançado</span>
-            <span>Design completo da marca</span>
-          </div>
-
-          <a href="contato.html" class="btn btn-primary st-btn">Quero este formato</a>
-        </div>
-
-        <!-- ITEM 3 -->
-        <div class="st-item">
-          <div class="st-icon"></div>
-          <h3>Landing de Campanha</h3>
-          <p class="st-desc">Para lançamentos, promoções e eventos com data definida.</p>
-
-          <div class="st-features">
-            <span>Ação específica</span>
-            <span>Alta performance</span>
-            <span>Pixel e analytics</span>
-          </div>
-
-          <a href="contato.html" class="btn btn-primary st-btn">Quero este formato</a>
-        </div>
-
-      </div>
+    <div class="footer-bottom">
+      <p>© <span id="year"></span> Prime Page — Todos os direitos reservados.</p>
     </div>
-  </section>
-
-  <!-- COMPARAÇÃO RÁPIDA -->
-  <section class="section section-alt">
-    <div class="container">
-      <h2 class="section-title">Diferença entre cada formato</h2>
-
-      <div class="compare-services">
-        <div class="cs-block">
-          <h4>Landing Page</h4>
-          <p>Direta, rápida e com foco em conversão.</p>
-        </div>
-
-        <div class="cs-block">
-          <h4>Institucional</h4>
-          <p>Completo, profissional e ideal para fortalecer a marca.</p>
-        </div>
-
-        <div class="cs-block">
-          <h4>Landing de Campanha</h4>
-          <p>Perfeita para ofertas temporárias e anúncios.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- PASSO A PASSO DA CRIAÇÃO -->
-  <section class="section">
-    <div class="container">
-      <h2 class="section-title">Seu site criado com organização</h2>
-      <p class="section-subtitle">Processo simples, rápido e sem complicação.</p>
-
-      <div class="timeline-premium services-timeline">
-        
-        <div class="step">
-          <div class="dot"></div>
-          <div class="step-content">
-            <span class="step-tag">1º passo</span>
-            <h3>Briefing simples</h3>
-            <p>Você responde algumas perguntas rápidas sobre o negócio.</p>
-          </div>
-        </div>
-
-        <div class="step step-media">
-          <div class="dot"></div>
-          <div class="step-media-box"><span>Prévia do layout</span></div>
-          <div class="step-content">
-            <span class="step-tag">2º passo</span>
-            <h3>Proposta visual</h3>
-            <p>A gente cria o visual principal do site.</p>
-          </div>
-        </div>
-
-        <div class="step step-icon">
-          <div class="dot"></div>
-          <div class="step-icon-box">⚙️</div>
-          <div class="step-content">
-            <span class="step-tag">3º passo</span>
-            <h3>Programação</h3>
-            <p>O site ganha vida, fica responsivo e otimizado.</p>
-          </div>
-        </div>
-
-        <div class="step">
-          <div class="dot"></div>
-          <div class="step-content">
-            <span class="step-tag">4º passo</span>
-            <h3>Entrega</h3>
-            <p>Seu site vai ao ar e você recebe suporte inicial.</p>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- CTA FINAL -->
-  <section class="section section-cta">
-    <div class="container section-cta-box">
-      <div>
-        <h2>Vamos descobrir qual formato combina mais com o seu momento?</h2>
-        <p>Fale com a Prime Page e receba uma orientação sem compromisso.</p>
-      </div>
-      <a href="contato.html" class="btn btn-primary">Quero entender melhor</a>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer class="footer footer-glow">
-  <div class="footer-neon-line"></div>
-
-  <div class="container footer-grid">
-
-    <div class="footer-brand">
-      <img src="assets/img/logo prime.jpg" alt="Prime Page" class="footer-logo">
-     
-      <p>Transformando negócios em presença digital profissional.</p>
-    </div>
-
-    <div class="footer-links">
-      <h4>Navegação</h4>
-      <ul>
-        <li><a href="index.html">Início</a></li>
-        <li><a href="sobre.html">Sobre</a></li>
-        <li><a href="servicos.html">Serviços</a></li>
-        <li><a href="portfolio.html">Portfólio</a></li>
-        <li><a href="contato.html">Contato</a></li>
-      </ul>
-    </div>
-
-    <div class="footer-contact">
-      <h4>Contato</h4>
-      <p>📱 <strong>WhatsApp:</strong> +55 19 99883-9704</p>
-      <p>📧 <strong>Email:</strong> primepagesleme@gmail.com</p>
-      <a href="https://wa.me/5519998839704" class="btn btn-primary btn-magnet footer-wpp">Falar no WhatsApp</a>
-    </div>
-
-    <div class="footer-social">
-      <h4>Redes Sociais</h4>
-      <div class="footer-icons">
-        <a href="https://www.instagram.com/primepages_leme"  target="_blank" class="footer-icon"><img src="assets/img/instagram.png" style="width: 20px; height: auto;"></img></a>
-        </div>
-      <div> Instagram</div>
-    </div>
-      
-
-  </div>
-
-  <div class="footer-bottom">
-    <p>© <span id="year"></span> Prime Page — Todos os direitos reservados.</p>
-  </div>
-</footer>
+  </footer>
 
   <script src="assets/js/main.js"></script>
 </body>

@@ -3,221 +3,187 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Portfólio | Projetos criados pela Prime Page</title>
+  <title>Projetos | Prime Page</title>
+  <meta name="description" content="Sites e sistemas que a Prime Page criou para empresas e projetos reais de Leme e região.">
+  <link rel="icon" href="assets/img/logo prime.jpg">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body>
 
-  <!-- FUNDO ANIMADO -->
-  <div class="bg-orbs">
-    <span class="orb orb-1"></span>
-    <span class="orb orb-2"></span>
-    <span class="orb orb-3"></span>
-    <span class="orb orb-4"></span>
-  </div>
-
   <header class="header">
     <div class="container header-content">
-      <a href="index.html" class="logo">
-        <img src="assets/img/logo prime.jpg" style="width: 150px; height: auto;" alt="Prime Page">
-       
-      </a>
-
-      <div class="nav-toggle">
-        <span></span><span></span><span></span>
-      </div>
-
+      <a href="index.html" class="logo"><img src="assets/img/logo prime.jpg" alt="Prime Page"></a>
+      <button class="nav-toggle" aria-label="Abrir menu"><span></span><span></span><span></span></button>
       <nav>
         <ul>
-          <li><a href="index.html" class="active">Início</a></li>
+          <li><a href="index.html">Início</a></li>
           <li><a href="sobre.html">Sobre</a></li>
           <li><a href="servicos.html">Serviços</a></li>
-          <li><a href="portfolio.html">Portfólio</a></li>
+          <li><a href="portfolio.html" class="active">Projetos</a></li>
           <li><a href="contato.html" class="nav-cta">Fale com a gente</a></li>
         </ul>
       </nav>
     </div>
   </header>
 
-  <!-- HERO PORTFÓLIO -->
-  <section class="page-hero portfolio-hero">
+  <!-- HERO -->
+  <section class="hero">
     <div class="container">
-      <h1>Projetos que ajudam empresas reais a vender mais todos os dias.</h1>
-      <p>
-        Cada site abaixo foi construído pensando no público do cliente, na forma como ele se comunica
-        e no resultado que queria alcançar com o digital.
-      </p>
+      <span class="eyebrow">Projetos</span>
+      <h1>Projetos no ar</h1>
+      <p class="lead">Sites e sistemas que a Prime Page criou para empresas e projetos reais.</p>
     </div>
   </section>
 
-
-
-
-
-
-  <!-- LISTA DE PROJETOS -->
-  <section class="section">
+  <!-- GRID -->
+  <section class="section reveal">
     <div class="container">
-      <div class="portfolio-grid-full">
+      <div class="work-grid">
 
-        <!-- PROJETO 1 -->
-        <article class="portfolio-item portfolio-item-full">
-          <div class="mockup-wrapper">
-            <div class="mockup">
-              <div class="mockup-topbar">
-                <span></span><span></span><span></span>
-              </div>
-              <div class="mockup-screen">
-                <img src="assets/img/projetos/era-um-vez.jpg" alt="Site Era Uma Vez Salão de Festas">
-              </div>
-              <div class="mockup-base"></div>
+        <!-- DESTAQUE 1 -->
+        <article class="work-card work-card--featured">
+          <div class="work-frame">
+            <div class="work-bar"><i></i><i></i><i></i><span>oficina-erp.vercel.app</span></div>
+            <div class="work-shot">
+              <img src="assets/img/projetos/oficina-erp.jpg" alt="Oficina ERP" onerror="this.remove()">
+              <div class="work-fallback"><span class="mono">OE</span><span class="name">Oficina ERP</span></div>
             </div>
           </div>
-
-          <div class="portfolio-info">
-            <span class="pill">Eventos & Festas</span>
-            <h3>Era Uma Vez | Salão de festas</h3>
+          <div class="work-body">
+            <div class="work-meta"><span class="tag is-accent">Sistema</span><span class="tag">Destaque</span></div>
+            <h3>Oficina ERP</h3>
             <p>
-              Um site elegante e acolhedor para um salão de festas que precisava transmitir magia,
-              confiança e praticidade. A navegação simples permite que clientes encontrem fotos,
-              planos e disponibilidade rapidamente.
+              Sistema completo para oficinas mecânicas: controle de estoque, abertura e
+              acompanhamento de ordens de serviço e emissão de notas fiscais direto pela plataforma.
             </p>
-
-            <ul class="portfolio-tags">
-              <li>Site institucional</li>
-              <li>Foco em agendamento</li>
-              <li>Experiência visual imersiva</li>
-            </ul>
-
-            <a href="https://eraumavezleme.com.br/" target="_blank" class="btn btn-ghost">
-              Ver site ao vivo
-            </a>
+            <a class="work-link" href="https://oficina-erp-git-master-bruno-alvares-projects.vercel.app/login" target="_blank" rel="noopener">Ver projeto</a>
           </div>
         </article>
 
-
-
-        
-
-        <!-- PROJETO 2 -->
-        <article class="portfolio-item portfolio-item-full portfolio-item-full--reverse">
-          <div class="mockup-wrapper">
-            <div class="mockup">
-              <div class="mockup-topbar">
-                <span></span><span></span><span></span>
-              </div>
-              <div class="mockup-screen">
-                <img src="assets/img/projetos/vivilian.jpg" alt="Site Vivilian Astróloga">
-              </div>
-              <div class="mockup-base"></div>
+        <!-- DESTAQUE 2 -->
+        <article class="work-card work-card--featured">
+          <div class="work-frame">
+            <div class="work-bar"><i></i><i></i><i></i><span>frotailumi.com.br</span></div>
+            <div class="work-shot">
+              <img src="assets/img/projetos/frota-ilumi.jpg" alt="Frota Ilumi" onerror="this.remove()">
+              <div class="work-fallback"><span class="mono">FI</span><span class="name">Frota Ilumi</span></div>
             </div>
           </div>
-
-          <div class="portfolio-info">
-            <span class="pill">Astrologia & Terapias</span>
-            <h3>Vivilian | Astróloga & Terapeuta</h3>
+          <div class="work-body">
+            <div class="work-meta"><span class="tag is-accent">Sistema</span><span class="tag">Destaque</span></div>
+            <h3>Frota Ilumi</h3>
             <p>
-              Criação completa de uma identidade digital moderna com foco em espiritualidade,
-              confiança e conexão emocional. A estética mística combina vibração leve com
-              clareza profissional.
+              Plataforma de controle de frota para a empresa Ilumi: cadastro de veículos,
+              agenda de manutenções, custos e status operacional de cada carro.
             </p>
-
-            <ul class="portfolio-tags">
-              <li>Identidade visual digital</li>
-              <li>Tom espiritual e acolhedor</li>
-              <li>Canal direto para atendimentos</li>
-            </ul>
-
-            <a href="http://vivilian.com.br/" target="_blank" class="btn btn-ghost">
-              Ver site ao vivo
-            </a>
+            <a class="work-link" href="https://www.frotailumi.com.br/" target="_blank" rel="noopener">Ver projeto</a>
           </div>
         </article>
 
-
-
-
-
-        <section class="section mini-cta">
-  <div class="container">
-    <h2 class="mini-cta-title">Todo site tem um propósito — e nós levamos isso a sério.</h2>
-    <p class="mini-cta-subtitle">
-      Cada projeto abaixo foi criado com uma decisão estratégica por trás: capturar mais clientes,
-      melhorar a apresentação ou gerar confiança instantânea.
-    </p>
-    <a href="contato.html" class="btn btn-ghost">Quero um site que causa impacto</a>
-  </div>
-</section>
-
-
-
-
-
-        <!-- PROJETO 3 -->
-        <article class="portfolio-item portfolio-item-full">
-          <div class="mockup-wrapper">
-            <div class="mockup">
-              <div class="mockup-topbar">
-                <span></span><span></span><span></span>
-              </div>
-              <div class="mockup-screen">
-                <img src="assets/img/projetos/bdn-logistics.jpg" alt="Site BDN Logistics">
-              </div>
-              <div class="mockup-base"></div>
+        <!-- ENCONTRAPET -->
+        <article class="work-card">
+          <div class="work-frame">
+            <div class="work-bar"><i></i><i></i><i></i><span>encontrapet.vercel.app</span></div>
+            <div class="work-shot">
+              <img src="assets/img/projetos/encontrapet.jpg" alt="EncontraPet" onerror="this.remove()">
+              <div class="work-fallback"><span class="mono">EP</span><span class="name">EncontraPet</span></div>
             </div>
           </div>
+          <div class="work-body">
+            <div class="work-meta"><span class="tag is-accent">Site + Sistema</span></div>
+            <h3>EncontraPet</h3>
+            <p>Plataforma colaborativa para moradores de Leme cadastrarem e localizarem pets perdidos.</p>
+            <a class="work-link" href="https://encontrapet-mocha.vercel.app/" target="_blank" rel="noopener">Ver projeto</a>
+          </div>
+        </article>
 
-          <div class="portfolio-info">
-            <span class="pill">Logística & Transporte</span>
+        <!-- ERA UMA VEZ -->
+        <article class="work-card">
+          <div class="work-frame">
+            <div class="work-bar"><i></i><i></i><i></i><span>eraumavezleme.com.br</span></div>
+            <div class="work-shot"><img src="assets/img/projetos/era-um-vez.jpg" alt="Site Era Uma Vez"></div>
+          </div>
+          <div class="work-body">
+            <div class="work-meta"><span class="tag">Site</span></div>
+            <h3>Era Uma Vez</h3>
+            <p>Site institucional para salão de festas, com foco na apresentação do espaço e no agendamento.</p>
+            <a class="work-link" href="https://eraumavezleme.com.br/" target="_blank" rel="noopener">Ver projeto</a>
+          </div>
+        </article>
+
+        <!-- VIVILIAN -->
+        <article class="work-card">
+          <div class="work-frame">
+            <div class="work-bar"><i></i><i></i><i></i><span>vivilian.com.br</span></div>
+            <div class="work-shot"><img src="assets/img/projetos/vivilian.jpg" alt="Site Vivilian"></div>
+          </div>
+          <div class="work-body">
+            <div class="work-meta"><span class="tag">Site</span></div>
+            <h3>Vivilian</h3>
+            <p>Identidade digital para astróloga e terapeuta, com canal direto para atendimentos.</p>
+            <a class="work-link" href="http://vivilian.com.br/" target="_blank" rel="noopener">Ver projeto</a>
+          </div>
+        </article>
+
+        <!-- BDN LOGISTICS -->
+        <article class="work-card">
+          <div class="work-frame">
+            <div class="work-bar"><i></i><i></i><i></i><span>bdnlogistics.com.br</span></div>
+            <div class="work-shot"><img src="assets/img/projetos/bdn-logistics.jpg" alt="Site BDN Logistics"></div>
+          </div>
+          <div class="work-body">
+            <div class="work-meta"><span class="tag">Site</span></div>
             <h3>BDN Logistics</h3>
-            <p>
-              Um site objetivo, organizado e extremamente rápido, ideal para uma empresa de logística
-              que precisava transmitir agilidade, seriedade e estrutura operacional.
-            </p>
-
-            <ul class="portfolio-tags">
-              <li>Site institucional enxuto</li>
-              <li>Performance otimizada</li>
-              <li>Foco em credibilidade</li>
-            </ul>
-
-            <a href="https://bdnlogistics.com.br/" target="_blank" class="btn btn-ghost">
-              Ver site ao vivo
-            </a>
+            <p>Site institucional enxuto e rápido para empresa de logística e transporte.</p>
+            <a class="work-link" href="https://bdnlogistics.com.br/" target="_blank" rel="noopener">Ver projeto</a>
           </div>
         </article>
 
-        <!-- PROJETO 4 -->
-        <article class="portfolio-item portfolio-item-full portfolio-item-full--reverse">
-          <div class="mockup-wrapper">
-            <div class="mockup">
-              <div class="mockup-topbar">
-                <span></span><span></span><span></span>
-              </div>
-              <div class="mockup-screen">
-                <img src="assets/img/projetos/viver-de-freelancer.jpg" alt="Site Viver de Freelancer">
-              </div>
-              <div class="mockup-base"></div>
+        <!-- LA FLU FLU -->
+        <article class="work-card">
+          <div class="work-frame">
+            <div class="work-bar"><i></i><i></i><i></i><span>lafluflumodas.com.br</span></div>
+            <div class="work-shot">
+              <img src="assets/img/projetos/lafluflu.jpg" alt="La Flu Flu Modas" onerror="this.remove()">
+              <div class="work-fallback"><span class="mono">LF</span><span class="name">La Flu Flu Modas</span></div>
             </div>
           </div>
+          <div class="work-body">
+            <div class="work-meta"><span class="tag">Loja</span></div>
+            <h3>La Flu Flu Modas</h3>
+            <p>Loja de roupas com catálogo e vitrine online.</p>
+            <a class="work-link" href="https://lafluflumodas.com.br/" target="_blank" rel="noopener">Ver projeto</a>
+          </div>
+        </article>
 
-          <div class="portfolio-info">
-            <span class="pill">Infoproduto & Educação</span>
+        <!-- DALU EVENTOS -->
+        <article class="work-card">
+          <div class="work-frame">
+            <div class="work-bar"><i></i><i></i><i></i><span>dalueventos.com.br</span></div>
+            <div class="work-shot">
+              <img src="assets/img/projetos/dalu-eventos.jpg" alt="Dalu Eventos" onerror="this.remove()">
+              <div class="work-fallback"><span class="mono">DE</span><span class="name">Dalu Eventos</span></div>
+            </div>
+          </div>
+          <div class="work-body">
+            <div class="work-meta"><span class="tag">Landing</span></div>
+            <h3>Dalu Eventos</h3>
+            <p>Landing page para o salão de festas Dalu Eventos.</p>
+            <a class="work-link" href="https://dalueventos.com.br/" target="_blank" rel="noopener">Ver projeto</a>
+          </div>
+        </article>
+
+        <!-- VIVER DE FREELANCER -->
+        <article class="work-card">
+          <div class="work-frame">
+            <div class="work-bar"><i></i><i></i><i></i><span>viverdefreelancer.com.br</span></div>
+            <div class="work-shot"><img src="assets/img/projetos/viver-de-freelancer.jpg" alt="Site Viver de Freelancer"></div>
+          </div>
+          <div class="work-body">
+            <div class="work-meta"><span class="tag">Landing</span></div>
             <h3>Viver de Freelancer</h3>
-            <p>
-              Página otimizada voltada para conversão, com foco em impacto rápido e informação clara.
-              Desenvolvida para impulsionar vendas e captar leads de forma inteligente.
-            </p>
-
-            <ul class="portfolio-tags">
-              <li>Landing page de alta conversão</li>
-              <li>Foco em captação de leads</li>
-              <li>Estrutura ideal para tráfego pago</li>
-            </ul>
-
-            <a href="https://www.viverdefreelancer.com.br/" target="_blank" class="btn btn-ghost">
-              Ver site ao vivo
-            </a>
+            <p>Landing page de alta conversão para infoproduto, preparada para tráfego pago.</p>
+            <a class="work-link" href="https://www.viverdefreelancer.com.br/" target="_blank" rel="noopener">Ver projeto</a>
           </div>
         </article>
 
@@ -225,94 +191,53 @@
     </div>
   </section>
 
-
-
-
-
-
-  <section class="section">
-  <div class="container">
-    <h2 class="section-title">Resultados que nossos clientes percebem na prática</h2>
-
-    <div class="results-grid">
-      <div class="result-item">
-        <h3>+ 230%</h3>
-        <p>Aumento médio de visitas após o lançamento</p>
-      </div>
-      <div class="result-item">
-        <h3>+ 180%</h3>
-        <p>Mais contatos vindos do site</p>
-      </div>
-      <div class="result-item">
-        <h3>Profissionalismo</h3>
-        <p>Clientes relatam mais confiança do público</p>
-      </div>
-      <div class="result-item">
-        <h3>Identidade forte</h3>
-        <p>Sites que finalmente representam a empresa</p>
-      </div>
-    </div>
-    
-    <p class="results-note">
-      Esses números são baseados em feedbacks diretos e relatórios enviados pelos próprios clientes.
-    </p>
-  </div>
-</section>
-
-
-
-
-
-
-
-
-
-
-   <!-- FOOTER -->
-  <footer class="footer footer-glow">
-  <div class="footer-neon-line"></div>
-
-  <div class="container footer-grid">
-
-    <div class="footer-brand">
-      <img src="assets/img/logo prime.jpg" alt="Prime Page" class="footer-logo">
-     
-      <p>Transformando negócios em presença digital profissional.</p>
-    </div>
-
-    <div class="footer-links">
-      <h4>Navegação</h4>
-      <ul>
-        <li><a href="index.html">Início</a></li>
-        <li><a href="sobre.html">Sobre</a></li>
-        <li><a href="servicos.html">Serviços</a></li>
-        <li><a href="portfolio.html">Portfólio</a></li>
-        <li><a href="contato.html">Contato</a></li>
-      </ul>
-    </div>
-
-    <div class="footer-contact">
-      <h4>Contato</h4>
-      <p>📱 <strong>WhatsApp:</strong> +55 19 99883-9704</p>
-      <p>📧 <strong>Email:</strong> primepagesleme@gmail.com</p>
-      <a href="https://wa.me/5519998839704" class="btn btn-primary btn-magnet footer-wpp">Falar no WhatsApp</a>
-    </div>
-
-    <div class="footer-social">
-      <h4>Redes Sociais</h4>
-      <div class="footer-icons">
-        <a href="https://www.instagram.com/primepages_leme"  target="_blank" class="footer-icon"><img src="assets/img/instagram.png" style="width: 20px; height: auto;"></img></a>
+  <!-- CTA -->
+  <section class="section-tight reveal">
+    <div class="container">
+      <div class="cta-band">
+        <div>
+          <h2>Seu projeto pode ser o próximo.</h2>
+          <p>Conte o que precisa e receba uma proposta sem compromisso.</p>
         </div>
-      <div> Instagram</div>
+        <a href="https://wa.me/5519998839704" class="btn btn-primary">Falar no WhatsApp</a>
+      </div>
     </div>
-      
+  </section>
 
-  </div>
-
-  <div class="footer-bottom">
-    <p>© <span id="year"></span> Prime Page — Todos os direitos reservados.</p>
-  </div>
-</footer>
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <img src="assets/img/logo prime.jpg" alt="Prime Page">
+        <p>Sites e sistemas sob medida para negócios de Leme e região.</p>
+      </div>
+      <div>
+        <h4>Navegação</h4>
+        <ul>
+          <li><a href="index.html">Início</a></li>
+          <li><a href="sobre.html">Sobre</a></li>
+          <li><a href="servicos.html">Serviços</a></li>
+          <li><a href="portfolio.html">Projetos</a></li>
+          <li><a href="contato.html">Contato</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Contato</h4>
+        <ul>
+          <li><a href="https://wa.me/5519998839704">WhatsApp (19) 99883-9704</a></li>
+          <li><a href="mailto:primepagesleme@gmail.com">primepagesleme@gmail.com</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Social</h4>
+        <ul>
+          <li><a href="https://www.instagram.com/primepages_leme" target="_blank" rel="noopener">Instagram</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© <span id="year"></span> Prime Page — Todos os direitos reservados.</p>
+    </div>
+  </footer>
 
   <script src="assets/js/main.js"></script>
 </body>
