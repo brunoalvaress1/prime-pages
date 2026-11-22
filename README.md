@@ -1,102 +1,32 @@
-# 🚀 Prime Pages
+# Prime Page
 
-A **Prime Pages** é uma agência digital focada na criação de **sites profissionais, landing pages, portfólios e soluções web modernas**, ajudando empresas e profissionais a fortalecerem sua presença online e aumentarem resultados.
+Site da Prime Page (primepagesleme.com.br): apresentação do estúdio e o construtor **"Construa o seu site"**, onde o cliente monta o próprio site ou sistema e envia para orçamento no WhatsApp com um resumo técnico.
 
----
+## Rodar
 
-## 📌 Sobre o Projeto
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # gera dist/
+```
 
-Este projeto representa o site institucional da **Prime Pages**, criado para apresentar serviços, captar clientes e demonstrar autoridade no mercado digital.
+## Estrutura
 
-Nosso objetivo é transformar ideias em sites modernos, rápidos e estratégicos.
+- `src/pages/Home.jsx`: página inicial (hero 3D, manual, peças, sistemas, projetos, orçamento).
+- `src/pages/Builder.jsx`: construtor (Começar → Montar → Orçamento).
+- `src/builder/`: editor de site, montador de sistema, revisão e renderizador do site do cliente.
+- `src/data/`: peças (seções), modelos prontos, sistemas e projetos do portfólio.
+- `src/lib/scope.js`: calcula o que o projeto exige (pagamento, banco, login…) e monta a mensagem do WhatsApp.
+- `src/lib/generator.js`: engenharia reversa por URL e geração por texto. **Hoje é uma simulação local por regras**; defina `VITE_GENERATOR_ENDPOINT` para ligar a IA no servidor.
+- `src/lib/supabase.js` + `supabase/schema.sql`: salva os pedidos de orçamento quando as chaves existem.
 
----
+## Variáveis de ambiente
 
-## 💼 Serviços Oferecidos
+Copie `.env.example` para `.env` (e configure as mesmas no Vercel):
 
-### 🌐 Criação de Sites Profissionais
+- `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`: sem elas o site funciona, só não salva no banco.
+- `VITE_GENERATOR_ENDPOINT`: endpoint da IA (opcional).
 
-* Sites institucionais
-* Sites empresariais
-* Sites para prestadores de serviço
-* Sites responsivos
+## Deploy
 
-### 📈 Landing Pages
-
-* Páginas para anúncios
-* Captação de leads
-* Alta conversão
-* Campanhas promocionais
-
-### 🎯 Portfólios Profissionais
-
-* Instrutores de autoescola
-* Profissionais autônomos
-* Designers
-* Desenvolvedores
-* Prestadores de serviço
-
-### 🛒 Lojas Online
-
-* Catálogo digital
-* Integração com WhatsApp
-* Vendas simplificadas
-
----
-
-## ⚙️ Tecnologias Utilizadas
-
-* HTML5
-* CSS3
-* JavaScript
-* Bootstrap
-* React (em alguns projetos)
-* GitHub Pages / Vercel
-
----
-
-## 🎨 Diferenciais da Prime Pages
-
-* Design moderno e profissional
-* Sites rápidos e responsivos
-* Atendimento personalizado
-* Foco em vendas e resultado
-* Entrega ágil
-* Preço acessível
-
----
-
-## 📱 Público-Alvo
-
-* Pequenas empresas
-* Negócios locais
-* Autônomos
-* Instrutores particulares
-* Comerciantes
-* Profissionais liberais
-
----
-
-## 🌍 Objetivo
-
-Levar presença digital profissional para quem deseja crescer, vender mais e transmitir confiança online.
-
----
-
-## 📸 Preview
-
-Em breve...
-
----
-
-## 🚀 Desenvolvido por
-
-**Bruno Alvares**
-Fundador da Prime Pages
-Desenvolvedor Web
-
-## 📫 Contato
-
-Instagram: adicionar link
-WhatsApp: adicionar link
-GitHub: https://github.com/brunoalvaress1
+Vercel, framework Vite (build `npm run build`, saída `dist`). `vercel.json` redireciona as rotas para o app.

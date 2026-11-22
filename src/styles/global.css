@@ -1,0 +1,134 @@
+@import '@fontsource-variable/archivo/wdth.css';
+@import '@fontsource-variable/jetbrains-mono';
+@import '@fontsource-variable/manrope';
+@import '@fontsource-variable/fraunces';
+@import '@fontsource-variable/bricolage-grotesque';
+
+:root {
+  /* A caixa do kit */
+  --ink: #0a101c;
+  --ink-2: #0f1828;
+  --ink-3: #16223a;
+  --line: #22314f;
+  /* Plástico moldado: a cor da logo */
+  --mold: #1f6fff;
+  --mold-hi: #5c95ff;
+  --mold-lo: #1554cc;
+  --mold-ink: #b9d0ff;
+  /* Papel do manual */
+  --sheet: #eef1f5;
+  --sheet-2: #e2e7ee;
+  --sheet-ink: #0d1422;
+  --sheet-muted: #4a556b;
+  --sheet-line: #c3cbd8;
+  /* Tinta de chamada (números de peça) */
+  --call: #ffb020;
+
+  --text: #eaf0fa;
+  --muted: #9fb0cc;
+
+  --f-display: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
+  --f-ui: 'Archivo Variable', 'Archivo', system-ui, sans-serif;
+  --f-part: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
+
+  --r: 14px;
+  --r-sm: 8px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(0, 0, 0, 0.25);
+  --wrap: min(1240px, calc(100vw - 48px));
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--f-ui);
+  font-size: 17px;
+  line-height: 1.55;
+  font-variation-settings: 'wdth' 100;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4 { margin: 0; font-family: var(--f-display); text-wrap: balance; }
+p { margin: 0; text-wrap: pretty; }
+a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.22em; }
+img { display: block; max-width: 100%; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+
+::selection { background: var(--mold); color: #fff; }
+:focus-visible { outline: 2px solid var(--call); outline-offset: 3px; border-radius: 4px; }
+input, textarea { caret-color: var(--call); }
+
+html { scrollbar-color: var(--line) var(--ink); scrollbar-width: thin; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--ink); }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 10px; border: 2px solid var(--ink); }
+
+.wrap { width: var(--wrap); margin-inline: auto; }
+
+.part-no {
+  font-family: var(--f-part);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Botões: peças moldadas */
+.btn {
+  --b: var(--mold);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--b);
+  color: #fff;
+  font-weight: 650;
+  font-size: 16px;
+  font-variation-settings: 'wdth' 108;
+  text-decoration: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -2px 0 rgba(0, 0, 0, 0.22), 0 10px 24px -12px rgba(31, 111, 255, 0.9);
+  transition: transform 0.35s var(--ease), background 0.2s, box-shadow 0.35s var(--ease);
+}
+.btn:hover { background: var(--mold-hi); transform: translateY(-1px); }
+.btn:active { transform: translateY(1px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.22); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.btn .icon { flex: none; }
+.btn.is-ghost {
+  background: transparent;
+  color: var(--text);
+  box-shadow: inset 0 0 0 1.5px var(--line);
+}
+.btn.is-ghost:hover { box-shadow: inset 0 0 0 1.5px var(--mold); background: rgba(31, 111, 255, 0.08); }
+.btn.is-wa { --b: #1faa59; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -2px 0 rgba(0, 0, 0, 0.22), 0 10px 24px -12px rgba(31, 170, 89, 0.9); }
+.btn.is-wa:hover { background: #26c267; }
+.btn.is-sm { min-height: 38px; padding: 0 14px; font-size: 14px; border-radius: 8px; }
+
+.field {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1.5px solid var(--line);
+  background: var(--ink-2);
+  color: var(--text);
+  transition: border-color 0.2s;
+}
+.field::placeholder { color: #7486a6; }
+.field:focus { outline: none; border-color: var(--mold); }
+textarea.field { padding: 14px 16px; min-height: 120px; resize: vertical; line-height: 1.5; }
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
