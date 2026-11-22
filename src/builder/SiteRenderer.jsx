@@ -1,20 +1,58 @@
-import { lazy, Suspense, useRef } from 'react'
+import { createContext, lazy, Suspense, useContext, useRef } from 'react'
 import Icon from '../components/Icon.jsx'
 import { BLOCKS } from '../data/blocks.js'
+import { imageCss } from './imageStyle.js'
 
-function onColor(hex) {
+const Scene3D = lazy(() => import('../components/Scene3D.jsx'))
+
+const BLOCK_LABEL = (type) => `${BLOCKS[type].part} · ${BLOCKS[type].label}`
+
+export function onColor(hex) {
   const n = parseInt((hex || '#000000').slice(1), 16)
   const lin = (c) => ((c /= 255) <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
   const L = 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255)
   return L > 0.36 ? '#111318' : '#ffffff'
 }
 
-const BLOCK_LABEL = (type) => `${BLOCKS[type].part} · ${BLOCKS[type].label}`
+// ---- caminhos de imagem: 'image' | 'images.2' | 'items.1.image'
+export function getPath(obj, path) {
+  return path.split('.').reduce((o, k) => (o == null ? o : o[k]), obj)
+}
+export function setPathPatch(props, path, value) {
+  const [head, ...rest] = path.split('.')
+  if (!rest.length) return { [head]: value }
+  const clone = structuredClone(props[head])
+  let o = clone
+  rest.slice(0, -1).forEach((k) => (o = o[k]))
+  o[rest[rest.length - 1]] = value
+  return { [head]: clone }
+}
 
-const Scene3D = lazy(() => import('../components/Scene3D.jsx'))
+export function readImage(file) {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) return reject(new Error('Envie uma imagem (JPG, PNG ou WebP).'))
+    if (file.size > 8 * 1024 * 1024) return reject(new Error('Imagem acima de 8 MB. Use uma versão menor.'))
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      const scale = Math.min(1, 1600 / Math.max(img.width, img.height))
+      const c = document.createElement('canvas')
+      c.width = Math.round(img.width * scale)
+      c.height = Math.round(img.height * scale)
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height)
+      URL.revokeObjectURL(url)
+      resolve(c.toDataURL(file.type === 'image/png' ? 'image/png' : 'image/jpeg', 0.84))
+    }
+    img.onerror = () => reject(new Error('Não conseguimos ler essa imagem.'))
+    img.src = url
+  })
+}
+
+const Ctx = createContext(null)
 
 // Texto editável direto na prévia.
-function T({ as: Tag = 'span', value, onChange, editing, className, multiline }) {
+function T({ as: Tag = 'span', value, onChange, className = '', multiline }) {
+  const { editing } = useContext(Ctx)
   if (!editing) return <Tag className={className}>{value}</Tag>
   return (
     <Tag
@@ -38,47 +76,68 @@ function T({ as: Tag = 'span', value, onChange, editing, className, multiline })
   )
 }
 
-export function readImage(file) {
-  return new Promise((resolve, reject) => {
-    if (!file.type.startsWith('image/')) return reject(new Error('Envie uma imagem (JPG, PNG ou WebP).'))
-    if (file.size > 8 * 1024 * 1024) return reject(new Error('Imagem acima de 8 MB. Use uma versão menor.'))
-    const img = new Image()
-    const url = URL.createObjectURL(file)
-    img.onload = () => {
-      // Reduz para no máximo 1600px para caber no navegador.
-      const scale = Math.min(1, 1600 / Math.max(img.width, img.height))
-      const c = document.createElement('canvas')
-      c.width = Math.round(img.width * scale)
-      c.height = Math.round(img.height * scale)
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height)
-      URL.revokeObjectURL(url)
-      resolve(c.toDataURL('image/jpeg', 0.82))
-    }
-    img.onerror = () => reject(new Error('Não conseguimos ler essa imagem.'))
-    img.src = url
-  })
-}
-
-function Img({ src, onChange, editing, className, label = 'Adicionar imagem' }) {
+// Imagem com formato/ajustes. Clicar seleciona; arrastar move o enquadramento.
+function Img({ block, path, className = '', label = 'Adicionar imagem' }) {
+  const ctx = useContext(Ctx)
+  const { editing, selImg, onSelectImage, onEdit, onMedia } = ctx
+  const src = getPath(block.props, path)
+  const st = block.props.media?.[path]
+  const css = imageCss(st)
   const input = useRef(null)
+  const drag = useRef(null)
+  const isSel = editing && selImg?.blockId === block.id && selImg?.path === path
+
   const pick = async (e) => {
     const f = e.target.files?.[0]
     if (!f) return
     try {
-      onChange(await readImage(f))
+      onEdit(block.id, setPathPatch(block.props, path, await readImage(f)))
+      onSelectImage?.(block.id, path)
     } catch (err) {
       alert(err.message)
     }
     e.target.value = ''
   }
+
+  const down = (e) => {
+    if (!isSel || !src) return
+    e.preventDefault()
+    const r = e.currentTarget.getBoundingClientRect()
+    drag.current = { sx: e.clientX, sy: e.clientY, x: st?.x ?? 50, y: st?.y ?? 50, w: r.width, h: r.height }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+  const move = (e) => {
+    const d = drag.current
+    if (!d) return
+    const zoom = (st?.zoom ?? 100) / 100
+    const k = 100 / Math.max(zoom, 1)
+    const x = Math.max(0, Math.min(100, d.x - ((e.clientX - d.sx) / d.w) * k))
+    const y = Math.max(0, Math.min(100, d.y - ((e.clientY - d.sy) / d.h) * k))
+    onMedia(block.id, path, { x: Math.round(x), y: Math.round(y) })
+  }
+  const up = () => (drag.current = null)
+
   return (
-    <div className={`cs-img ${className || ''} ${src ? '' : 'is-empty'}`}>
-      {src ? <img src={src} alt="" loading="lazy" /> : <span className="cs-img-ph"><Icon name="image" />{editing ? label : ''}</span>}
+    <div
+      className={`cs-img ${className} ${src ? '' : 'is-empty'} ${isSel ? 'is-sel' : ''}`}
+      style={css.frame}
+      onClick={(e) => {
+        if (!editing) return
+        e.stopPropagation()
+        onSelectImage?.(block.id, path)
+      }}
+    >
+      <div className="cs-img-clip" style={css.clip} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}>
+        {src ? <img src={src} alt="" draggable={false} style={css.img} /> : <span className="cs-img-ph"><Icon name="image" />{editing ? label : ''}</span>}
+        {css.overlay > 0 && <span className="cs-img-overlay" style={{ opacity: css.overlay / 100 }} />}
+        {css.border > 0 && <span className="cs-img-border" style={{ boxShadow: `inset 0 0 0 ${css.border}px ${css.borderColor}`, borderRadius: css.clip.borderRadius }} />}
+      </div>
       {editing && (
         <>
-          <button type="button" className="cs-img-btn" onClick={() => input.current.click()}>
+          <button type="button" className="cs-img-btn" onClick={(e) => { e.stopPropagation(); input.current.click() }}>
             <Icon name="upload" /> {src ? 'Trocar' : 'Enviar'}
           </button>
+          {isSel && src && <span className="cs-img-hint">Arraste para enquadrar</span>}
           <input ref={input} type="file" accept="image/*" hidden onChange={pick} />
         </>
       )}
@@ -86,61 +145,129 @@ function Img({ src, onChange, editing, className, label = 'Adicionar imagem' }) 
   )
 }
 
-function Items({ block, edit, editing, render }) {
-  const set = (i, patch) => {
-    const items = block.props.items.map((it, j) => (j === i ? { ...it, ...patch } : it))
-    edit({ items })
-  }
-  return block.props.items.map((it, i) => render(it, (patch) => set(i, patch), i, editing))
+function Items({ block, edit, render }) {
+  const set = (i, patch) => edit({ items: block.props.items.map((it, j) => (j === i ? { ...it, ...patch } : it)) })
+  return block.props.items.map((it, i) => render(it, (patch) => set(i, patch), i))
 }
 
-function Section({ block, edit, editing }) {
+function Three({ p, accent, className }) {
+  return (
+    <div className={className}>
+      <Suspense fallback={<div className="cs-3d-loading">Carregando 3D…</div>}>
+        <Scene3D shape={p.shape} color={p.color || accent} material={p.material} glb={p.glb} />
+      </Suspense>
+    </div>
+  )
+}
+
+function Section({ block, edit, theme }) {
   const p = block.props
-  const t = (key, as, cls, multiline) => <T as={as} className={cls} value={p[key]} editing={editing} multiline={multiline} onChange={(v) => edit({ [key]: v })} />
+  const t = (key, as, cls, multiline) => <T as={as} className={cls} value={p[key]} multiline={multiline} onChange={(v) => edit({ [key]: v })} />
+  const btns = (
+    <div className="cs-btns">
+      <span className="cs-btn">{t('cta', 'span', '')}</span>
+      {p.cta2 ? <span className="cs-btn is-ghost">{t('cta2', 'span', '')}</span> : null}
+    </div>
+  )
 
   switch (block.type) {
-    case 'hero':
+    case 'hero': {
+      const L = p.layout || 'split'
       return (
-        <header className={`cs-hero is-${p.layout || 'split'}`}>
-          {p.layout === 'full' && p.image && <img className="cs-hero-bg" src={p.image} alt="" />}
+        <header className={`cs-hero is-${L}`}>
+          {L === 'full' && <Img block={block} path="image" className="cs-hero-bg" label="Imagem de fundo" />}
+          {L === '3d' && <Three p={p} accent={theme.accent} className="cs-hero-3d" />}
           <div className="cs-hero-copy">
+            {p.kicker ? t('kicker', 'span', 'cs-kicker') : null}
             {t('title', 'h1', 'cs-h1')}
             {t('subtitle', 'p', 'cs-lead', true)}
-            <span className="cs-btn">{t('cta', 'span', '')}</span>
+            {btns}
           </div>
-          {p.layout !== 'full' && <Img src={p.image} editing={editing} onChange={(image) => edit({ image })} className="cs-hero-img" />}
-          {p.layout === 'full' && editing && <Img src={p.image} editing onChange={(image) => edit({ image })} className="cs-hero-swap" label="Imagem de fundo" />}
+          {(L === 'split' || L === 'editorial') && <Img block={block} path="image" className="cs-hero-img" />}
         </header>
+      )
+    }
+    case 'marquee':
+      return (
+        <div className="cs-marquee" aria-label={p.text}>
+          <div className="cs-marquee-track">
+            {[0, 1].map((k) => (
+              <span key={k} aria-hidden={k === 1}>{k === 0 ? t('text', 'span', '') : p.text}<i className="cs-marquee-dot" /></span>
+            ))}
+          </div>
+        </div>
       )
     case 'about':
       return (
-        <section className="cs-sec cs-about">
-          <div>
+        <section className={`cs-about is-${p.layout || 'split'}`}>
+          <div className="cs-about-copy">
             {t('title', 'h2', 'cs-h2')}
             {t('text', 'p', 'cs-p', true)}
           </div>
-          <Img src={p.image} editing={editing} onChange={(image) => edit({ image })} />
+          <div className="cs-about-media">
+            <Img block={block} path="image" />
+            {p.image2 || p.showImage2 ? <Img block={block} path="image2" className="cs-about-second" /> : null}
+          </div>
         </section>
       )
-    case 'services':
-    case 'faq':
-    case 'testimonials':
-    case 'pricing':
-    case 'menu':
+    case 'services': {
+      const L = p.layout || 'cards'
       return (
-        <section className={`cs-sec cs-list is-${block.type}`}>
+        <section className={`cs-list is-services is-${L}`}>
           {t('title', 'h2', 'cs-h2')}
           <div className="cs-grid">
             <Items
               block={block}
               edit={edit}
-              editing={editing}
+              render={(it, set, i) => (
+                <article key={i} className="cs-item">
+                  {L === 'images' && <Img block={block} path={`items.${i}.image`} />}
+                  {L === 'list' && <span className="cs-num">{String(i + 1).padStart(2, '0')}</span>}
+                  <div>
+                    <T as="h3" className="cs-h3" value={it.title} onChange={(v) => set({ title: v })} />
+                    <T as="p" className="cs-p" value={it.text} multiline onChange={(v) => set({ text: v })} />
+                  </div>
+                </article>
+              )}
+            />
+          </div>
+        </section>
+      )
+    }
+    case 'stats':
+      return (
+        <section className="cs-stats">
+          <Items
+            block={block}
+            edit={edit}
+            render={(it, set, i) => (
+              <div key={i} className="cs-stat">
+                <T as="strong" value={it.title} onChange={(v) => set({ title: v })} />
+                <T as="span" value={it.text} onChange={(v) => set({ text: v })} />
+              </div>
+            )}
+          />
+        </section>
+      )
+    case 'faq':
+    case 'testimonials':
+    case 'pricing':
+    case 'menu':
+    case 'steps':
+      return (
+        <section className={`cs-list is-${block.type}`}>
+          {t('title', 'h2', 'cs-h2')}
+          <div className="cs-grid">
+            <Items
+              block={block}
+              edit={edit}
               render={(it, set, i) => (
                 <article key={i} className="cs-item">
                   {block.type === 'testimonials' && <Icon name="quote" className="cs-quote" />}
-                  <T as="h3" className="cs-h3" value={it.title} editing={editing} onChange={(v) => set({ title: v })} />
-                  {it.price !== undefined && <T as="strong" className="cs-price" value={it.price} editing={editing} onChange={(v) => set({ price: v })} />}
-                  <T as="p" className="cs-p" value={it.text} editing={editing} multiline onChange={(v) => set({ text: v })} />
+                  {block.type === 'steps' && <span className="cs-step-n">{i + 1}</span>}
+                  <T as="h3" className="cs-h3" value={it.title} onChange={(v) => set({ title: v })} />
+                  {it.price !== undefined && <T as="strong" className="cs-price" value={it.price} onChange={(v) => set({ price: v })} />}
+                  <T as="p" className="cs-p" value={it.text} multiline onChange={(v) => set({ text: v })} />
                 </article>
               )}
             />
@@ -150,18 +277,17 @@ function Section({ block, edit, editing }) {
     case 'products':
     case 'team':
       return (
-        <section className={`cs-sec cs-cards is-${block.type}`}>
+        <section className={`cs-cards is-${block.type}`}>
           {t('title', 'h2', 'cs-h2')}
           <div className="cs-grid">
             <Items
               block={block}
               edit={edit}
-              editing={editing}
               render={(it, set, i) => (
                 <article key={i} className="cs-card">
-                  <Img src={it.image} editing={editing} onChange={(image) => set({ image })} />
-                  <T as="h3" className="cs-h3" value={it.title} editing={editing} onChange={(v) => set({ title: v })} />
-                  {it.price !== undefined ? <T as="strong" className="cs-price" value={it.price} editing={editing} onChange={(v) => set({ price: v })} /> : <T as="p" className="cs-p" value={it.text} editing={editing} onChange={(v) => set({ text: v })} />}
+                  <Img block={block} path={`items.${i}.image`} />
+                  <T as="h3" className="cs-h3" value={it.title} onChange={(v) => set({ title: v })} />
+                  {it.price !== undefined ? <T as="strong" className="cs-price" value={it.price} onChange={(v) => set({ price: v })} /> : <T as="p" className="cs-p" value={it.text} onChange={(v) => set({ text: v })} />}
                   {block.type === 'products' && <span className="cs-btn is-small">Comprar</span>}
                 </article>
               )}
@@ -169,22 +295,18 @@ function Section({ block, edit, editing }) {
           </div>
         </section>
       )
-    case 'gallery': {
-      const setImg = (i, v) => edit({ images: p.images.map((x, j) => (j === i ? v : x)) })
+    case 'gallery':
       return (
-        <section className="cs-sec">
+        <section>
           {t('title', 'h2', 'cs-h2')}
-          <div className="cs-gallery">
-            {p.images.map((src, i) => (
-              <Img key={i} src={src} editing={editing} onChange={(v) => setImg(i, v)} />
-            ))}
+          <div className={`cs-gallery is-${p.layout || 'grid'}`}>
+            {p.images.map((_, i) => <Img key={i} block={block} path={`images.${i}`} />)}
           </div>
         </section>
       )
-    }
     case 'booking':
       return (
-        <section className="cs-sec cs-booking">
+        <section className="cs-split">
           <div>
             {t('title', 'h2', 'cs-h2')}
             {t('text', 'p', 'cs-p', true)}
@@ -194,7 +316,7 @@ function Section({ block, edit, editing }) {
               <div key={d} className="cs-cal-day">
                 <b>{d}</b>
                 {['09:00', '10:30', '14:00', '16:30'].map((h, j) => (
-                  <span key={h} className={(i + j) % 3 === 0 ? 'is-taken' : (i === 2 && j === 1 ? 'is-on' : '')}>{h}</span>
+                  <span key={h} className={(i + j) % 3 === 0 ? 'is-taken' : i === 2 && j === 1 ? 'is-on' : ''}>{h}</span>
                 ))}
               </div>
             ))}
@@ -203,12 +325,12 @@ function Section({ block, edit, editing }) {
       )
     case 'blog':
       return (
-        <section className="cs-sec">
+        <section>
           {t('title', 'h2', 'cs-h2')}
           <div className="cs-grid">
             {[1, 2, 3].map((n) => (
               <article key={n} className="cs-card">
-                <div className="cs-img is-empty"><span className="cs-img-ph"><Icon name="image" /></span></div>
+                <div className="cs-img is-empty"><div className="cs-img-clip"><span className="cs-img-ph"><Icon name="image" /></span></div></div>
                 <h3 className="cs-h3">Título da publicação {n}</h3>
                 <p className="cs-p">Você publica pelo painel.</p>
               </article>
@@ -218,7 +340,7 @@ function Section({ block, edit, editing }) {
       )
     case 'login':
       return (
-        <section className="cs-sec cs-login">
+        <section className="cs-split">
           <div>
             {t('title', 'h2', 'cs-h2')}
             {t('text', 'p', 'cs-p')}
@@ -232,31 +354,36 @@ function Section({ block, edit, editing }) {
       )
     case 'model3d':
       return (
-        <section className="cs-sec cs-3d">
+        <section className="cs-split">
           <div>
             {t('title', 'h2', 'cs-h2')}
             {t('text', 'p', 'cs-p')}
           </div>
-          <div className="cs-3d-stage">
-            <Suspense fallback={<div className="cs-3d-loading">Carregando 3D…</div>}>
-              <Scene3D shape={p.shape} color={p.color} glb={p.glb} />
-            </Suspense>
-          </div>
+          <Three p={p} accent={theme.accent} className="cs-3d-stage" />
+        </section>
+      )
+    case 'cta':
+      return (
+        <section className="cs-cta">
+          {t('title', 'h2', 'cs-h2')}
+          {t('text', 'p', 'cs-lead', true)}
+          <div className="cs-btns"><span className="cs-btn">{t('cta', 'span', '')}</span></div>
         </section>
       )
     case 'map':
       return (
-        <section className="cs-sec cs-map">
+        <section className="cs-split">
           <div>
             {t('title', 'h2', 'cs-h2')}
             {t('address', 'p', 'cs-p')}
+            {p.hours !== undefined && t('hours', 'p', 'cs-p cs-hours')}
           </div>
           <iframe title="Mapa" loading="lazy" src={`https://www.google.com/maps?q=${encodeURIComponent(p.address)}&output=embed`} />
         </section>
       )
     case 'contact':
       return (
-        <section className="cs-sec cs-contact">
+        <section className="cs-split">
           <div>
             {t('title', 'h2', 'cs-h2')}
             {t('text', 'p', 'cs-p', true)}
@@ -275,7 +402,7 @@ function Section({ block, edit, editing }) {
   }
 }
 
-export default function SiteRenderer({ project, editing, selected, onSelect, onEdit, device }) {
+export default function SiteRenderer({ project, editing, selected, selImg, onSelect, onSelectImage, onEdit, onMedia, device }) {
   const th = project.theme
   const style = {
     '--cs-bg': th.bg,
@@ -286,25 +413,33 @@ export default function SiteRenderer({ project, editing, selected, onSelect, onE
     '--cs-on-accent': onColor(th.accent),
     '--cs-radius': th.radius + 'px',
     '--cs-font': `'${th.font} Variable', '${th.font}', system-ui, sans-serif`,
+    '--cs-head': `'${th.headingFont || th.font} Variable', '${th.headingFont || th.font}', system-ui, sans-serif`,
   }
+  const ctx = { editing, selImg, onSelectImage, onEdit, onMedia }
   return (
-    <div className={`cs-site is-${device || 'desktop'}`} style={style}>
-      <nav className="cs-nav">
-        <strong>{project.name}</strong>
-        <span>{project.blocks.filter((b) => !['hero', 'footer'].includes(b.type)).slice(0, 4).map((b) => b.props.title?.split(' ').slice(0, 2).join(' ')).join(' · ')}</span>
-      </nav>
-      {project.blocks.length === 0 && <div className="cs-empty">Nenhuma peça encaixada ainda. Escolha peças no painel.</div>}
-      {project.blocks.map((b) => (
-        <div
-          key={b.id}
-          className={`cs-block ${editing ? 'is-editing' : ''} ${selected === b.id ? 'is-selected' : ''}`}
-          onClickCapture={() => editing && onSelect?.(b.id)}
-          data-block={b.id}
-          data-part={editing ? BLOCK_LABEL(b.type) : undefined}
-        >
-          <Section block={b} editing={editing} edit={(patch) => onEdit?.(b.id, patch)} />
-        </div>
-      ))}
-    </div>
+    <Ctx.Provider value={ctx}>
+      <div className={`cs-site is-${device || 'desktop'} btn-${th.button || 'solid'} head-${th.headCase || 'normal'}`} style={style}>
+        <nav className="cs-nav">
+          <strong>{project.name}</strong>
+          <span>{project.blocks.filter((b) => !['hero', 'footer', 'marquee', 'stats', 'cta'].includes(b.type)).slice(0, 4).map((b) => b.props.title?.split(' ').slice(0, 2).join(' ')).join('   ')}</span>
+          <em className="cs-nav-cta">{project.blocks.find((b) => b.type === 'hero')?.props.cta || 'Contato'}</em>
+        </nav>
+        {project.blocks.length === 0 && <div className="cs-empty">Nenhuma peça encaixada ainda. Escolha peças no painel.</div>}
+        {project.blocks.map((b) => {
+          const s = b.props.style || {}
+          return (
+            <div
+              key={b.id}
+              className={`cs-block bg-${s.bg || 'auto'} pad-${s.pad || 'm'} align-${s.align || 'left'} ${editing ? 'is-editing' : ''} ${selected === b.id ? 'is-selected' : ''}`}
+              onClickCapture={() => editing && onSelect?.(b.id)}
+              data-block={b.id}
+              data-part={editing ? BLOCK_LABEL(b.type) : undefined}
+            >
+              <Section block={b} theme={th} edit={(patch) => onEdit?.(b.id, patch)} />
+            </div>
+          )
+        })}
+      </div>
+    </Ctx.Provider>
   )
 }

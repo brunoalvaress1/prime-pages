@@ -1,10 +1,10 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Icon from '../components/Icon.jsx'
-import SiteRenderer, { readImage } from './SiteRenderer.jsx'
-import { BLOCKS, BLOCK_ORDER } from '../data/blocks.js'
+import SiteRenderer from './SiteRenderer.jsx'
+import ImageEditor from './ImageEditor.jsx'
+import { BLOCKS, BLOCK_ORDER, SHAPES, MATERIALS } from '../data/blocks.js'
 import { THEMES, FONTS } from '../data/templates.js'
 import { FLAGS, computeScope } from '../lib/scope.js'
-import { SHAPES } from '../data/blocks.js'
 
 const FLAG_ICON = { payments: 'pay', database: 'db', auth: 'lock', admin: 'panel', notifications: 'bell', integrations: 'plug', reports: 'chart', '3d': 'cube', mobile: 'phone' }
 
@@ -79,126 +79,184 @@ function ItemsEditor({ block, dispatch }) {
   )
 }
 
-function Inspector({ state, dispatch }) {
-  const [tab, setTab] = useState('piece')
+function Seg({ value, options, onChange, wrap }) {
+  return (
+    <div className={`b-seg ${wrap ? 'is-wrap' : ''}`}>
+      {options.map(([v, l]) => <button key={v} className={value === v ? 'is-on' : ''} onClick={() => onChange(v)}>{l}</button>)}
+    </div>
+  )
+}
+
+function ThreeControls({ block, set, glbInput }) {
+  const p = block.props
+  return (
+    <>
+      <div className="b-field">
+        <span className="b-label">Objeto 3D</span>
+        <Seg wrap value={p.glb ? '' : p.shape} options={SHAPES.map((s) => [s.id, s.label])} onChange={(shape) => set({ shape, glb: '' })} />
+      </div>
+      <div className="b-field">
+        <span className="b-label">Material</span>
+        <Seg value={p.material || 'glossy'} options={MATERIALS.map((m) => [m.id, m.label])} onChange={(material) => set({ material })} />
+      </div>
+      <label className="b-field is-row">
+        <span className="b-label">Cor do objeto</span>
+        <span className="b-color">
+          <input type="color" value={p.color || '#1f6fff'} onChange={(e) => set({ color: e.target.value })} />
+          {p.color && <button className="b-link" onClick={() => set({ color: '' })}>usar destaque</button>}
+        </span>
+      </label>
+      <div className="b-field">
+        <button className="b-add" onClick={() => glbInput.current.click()}><Icon name="upload" size={14} /> Enviar modelo .glb</button>
+        <input ref={glbInput} type="file" accept=".glb,.gltf,model/gltf-binary" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) set({ glb: URL.createObjectURL(f) }); e.target.value = '' }} />
+        <small className="b-hint">Modelos do Blender exportados em glTF/.glb. Se não tiver, a Prime Page modela para você.</small>
+      </div>
+    </>
+  )
+}
+
+function PieceTab({ state, dispatch }) {
   const block = state.blocks.find((b) => b.id === state.selected)
   const glbInput = useRef(null)
-  const def = block && BLOCKS[block.type]
+  if (!block) return <p className="b-empty">Clique numa seção da prévia para editar. Textos você muda clicando direto neles; fotos, clicando na foto.</p>
+  const def = BLOCKS[block.type]
   const set = (patch) => dispatch({ type: 'props', id: block.id, patch })
+  const style = block.props.style || {}
+  const setStyle = (patch) => dispatch({ type: 'section-style', id: block.id, patch })
+
+  return (
+    <div className="b-piece">
+      <div className="b-piece-head">
+        <span className="part-no">PEÇA {def.part}</span>
+        <h3>{def.label}</h3>
+        <p>{def.hint}</p>
+      </div>
+      <div className="b-actions">
+        <button className="b-icon" onClick={() => dispatch({ type: 'move', id: block.id, dir: -1 })} aria-label="Subir"><Icon name="up" size={16} /></button>
+        <button className="b-icon" onClick={() => dispatch({ type: 'move', id: block.id, dir: 1 })} aria-label="Descer"><Icon name="down" size={16} /></button>
+        <button className="b-icon" onClick={() => dispatch({ type: 'duplicate', id: block.id })} aria-label="Duplicar"><Icon name="copy" size={16} /></button>
+        <button className="b-icon is-danger" onClick={() => dispatch({ type: 'remove', id: block.id })} aria-label="Remover peça"><Icon name="trash" size={16} /></button>
+      </div>
+
+      {def.needs.length > 0 && (
+        <div className="b-needs">
+          <span className="b-label">Essa peça exige</span>
+          {def.needs.map((n) => <span key={n} className="b-need"><Icon name={FLAG_ICON[n]} size={14} /> {FLAGS[n].label}</span>)}
+        </div>
+      )}
+
+      {def.layouts && (
+        <div className="b-field">
+          <span className="b-label">Layout</span>
+          <Seg wrap value={block.props.layout} options={def.layouts} onChange={(layout) => set({ layout })} />
+        </div>
+      )}
+
+      {block.type === 'hero' && (
+        <>
+          <label className="r-check is-sm"><input type="checkbox" checked={!!block.props.kicker} onChange={(e) => set({ kicker: e.target.checked ? 'Desde 2010 em Leme' : '' })} /> Frase pequena acima do título</label>
+          <label className="r-check is-sm"><input type="checkbox" checked={!!block.props.cta2} onChange={(e) => set({ cta2: e.target.checked ? 'Saiba mais' : '' })} /> Segundo botão</label>
+        </>
+      )}
+      {block.type === 'about' && (
+        <label className="r-check is-sm"><input type="checkbox" checked={!!(block.props.image2 || block.props.showImage2)} onChange={(e) => set(e.target.checked ? { showImage2: true } : { showImage2: false, image2: '' })} /> Segunda foto sobreposta</label>
+      )}
+      {((block.type === 'hero' && block.props.layout === '3d') || block.type === 'model3d') && <ThreeControls block={block} set={set} glbInput={glbInput} />}
+
+      {block.type === 'map' && (
+        <label className="b-field">
+          <span className="b-label">Endereço</span>
+          <input className="field is-sm" value={block.props.address} onChange={(e) => set({ address: e.target.value })} />
+        </label>
+      )}
+
+      <ItemsEditor block={block} dispatch={dispatch} />
+
+      <div className="b-field b-style">
+        <span className="b-label">Fundo da seção</span>
+        <Seg wrap value={style.bg || 'auto'} options={[['auto', 'Auto'], ['base', 'Fundo'], ['surface', 'Cartão'], ['accent', 'Destaque'], ['dark', 'Escuro'], ['light', 'Claro']]} onChange={(bg) => setStyle({ bg })} />
+        <span className="b-label">Espaçamento</span>
+        <Seg value={style.pad || 'm'} options={[['s', 'Compacto'], ['m', 'Normal'], ['l', 'Amplo']]} onChange={(pad) => setStyle({ pad })} />
+        <span className="b-label">Alinhamento</span>
+        <Seg value={style.align || 'left'} options={[['left', 'Esquerda'], ['center', 'Centro']]} onChange={(align) => setStyle({ align })} />
+      </div>
+    </div>
+  )
+}
+
+function ThemeTab({ state, dispatch }) {
+  const th = state.theme
+  const set = (patch) => dispatch({ type: 'theme', patch })
+  return (
+    <div className="b-theme">
+      <div className="b-field">
+        <span className="b-label">Paletas prontas</span>
+        <div className="b-palettes">
+          {Object.entries(THEMES).map(([k, t]) => (
+            <button key={k} className={state.themeKey === k ? 'is-on' : ''} onClick={() => dispatch({ type: 'theme', themeKey: k, patch: { ...t } })} title={t.name}>
+              <span style={{ background: t.bg }} /><span style={{ background: t.accent }} /><span style={{ background: t.text }} />
+              <small>{t.name}</small>
+            </button>
+          ))}
+        </div>
+      </div>
+      {[['accent', 'Cor de destaque'], ['bg', 'Fundo'], ['surface', 'Cartões'], ['text', 'Texto'], ['muted', 'Texto secundário']].map(([k, l]) => (
+        <label key={k} className="b-field is-row">
+          <span className="b-label">{l}</span>
+          <span className="b-color"><input type="color" value={th[k]} onChange={(e) => set({ [k]: e.target.value })} /><code>{th[k]}</code></span>
+        </label>
+      ))}
+      <label className="b-field">
+        <span className="b-label">Fonte dos títulos</span>
+        <select className="field is-sm" value={th.headingFont || th.font} onChange={(e) => set({ headingFont: e.target.value })}>
+          {FONTS.map((f) => <option key={f}>{f}</option>)}
+        </select>
+      </label>
+      <label className="b-field">
+        <span className="b-label">Fonte do texto</span>
+        <select className="field is-sm" value={th.font} onChange={(e) => set({ font: e.target.value })}>
+          {FONTS.map((f) => <option key={f}>{f}</option>)}
+        </select>
+      </label>
+      <div className="b-field">
+        <span className="b-label">Títulos</span>
+        <Seg value={th.headCase || 'normal'} options={[['normal', 'Normal'], ['upper', 'MAIÚSCULAS'], ['tight', 'Compacto']]} onChange={(headCase) => set({ headCase })} />
+      </div>
+      <div className="b-field">
+        <span className="b-label">Botões</span>
+        <Seg value={th.button || 'solid'} options={[['solid', 'Cheio'], ['outline', 'Contorno'], ['pill', 'Pílula']]} onChange={(button) => set({ button })} />
+      </div>
+      <label className="b-field">
+        <span className="b-label">Arredondamento: {th.radius}px</span>
+        <input type="range" min="0" max="32" value={th.radius} onChange={(e) => set({ radius: +e.target.value })} />
+      </label>
+    </div>
+  )
+}
+
+function Inspector({ state, dispatch }) {
+  const [tab, setTab] = useState('piece')
+  const imgBlock = state.selImg && state.blocks.find((b) => b.id === state.selImg.blockId)
+
+  useEffect(() => {
+    if (state.selImg) setTab('image')
+    else setTab((t) => (t === 'image' ? 'piece' : t))
+  }, [state.selImg])
 
   return (
     <aside className="b-inspector">
       <div className="b-tabs" role="tablist">
-        <button role="tab" aria-selected={tab === 'piece'} className={tab === 'piece' ? 'is-on' : ''} onClick={() => setTab('piece')}>Peça</button>
-        <button role="tab" aria-selected={tab === 'theme'} className={tab === 'theme' ? 'is-on' : ''} onClick={() => setTab('theme')}>Cores e fonte</button>
+        <button role="tab" aria-selected={tab === 'piece'} className={tab === 'piece' ? 'is-on' : ''} onClick={() => setTab('piece')}>Seção</button>
+        <button role="tab" aria-selected={tab === 'image'} className={tab === 'image' ? 'is-on' : ''} onClick={() => setTab('image')}>Foto</button>
+        <button role="tab" aria-selected={tab === 'theme'} className={tab === 'theme' ? 'is-on' : ''} onClick={() => setTab('theme')}>Visual</button>
       </div>
-
-      {tab === 'piece' && !block && <p className="b-empty">Clique numa seção da prévia para editar. Os textos você muda clicando direto neles.</p>}
-
-      {tab === 'piece' && block && (
-        <div className="b-piece">
-          <div className="b-piece-head">
-            <span className="part-no">PEÇA {def.part}</span>
-            <h3>{def.label}</h3>
-            <p>{def.hint}</p>
-          </div>
-          <div className="b-actions">
-            <button className="b-icon" onClick={() => dispatch({ type: 'move', id: block.id, dir: -1 })} aria-label="Subir"><Icon name="up" size={16} /></button>
-            <button className="b-icon" onClick={() => dispatch({ type: 'move', id: block.id, dir: 1 })} aria-label="Descer"><Icon name="down" size={16} /></button>
-            <button className="b-icon" onClick={() => dispatch({ type: 'duplicate', id: block.id })} aria-label="Duplicar"><Icon name="copy" size={16} /></button>
-            <button className="b-icon is-danger" onClick={() => dispatch({ type: 'remove', id: block.id })} aria-label="Remover peça"><Icon name="trash" size={16} /></button>
-          </div>
-
-          {def.needs.length > 0 && (
-            <div className="b-needs">
-              <span className="b-label">Essa peça exige</span>
-              {def.needs.map((n) => <span key={n} className="b-need"><Icon name={FLAG_ICON[n]} size={14} /> {FLAGS[n].label}</span>)}
-            </div>
-          )}
-
-          {block.type === 'hero' && (
-            <div className="b-field">
-              <span className="b-label">Layout da capa</span>
-              <div className="b-seg">
-                {[['split', 'Texto + imagem'], ['full', 'Imagem de fundo'], ['center', 'Só texto']].map(([v, l]) => (
-                  <button key={v} className={block.props.layout === v ? 'is-on' : ''} onClick={() => set({ layout: v })}>{l}</button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {block.type === 'model3d' && (
-            <>
-              <div className="b-field">
-                <span className="b-label">Forma</span>
-                <div className="b-seg is-wrap">
-                  {SHAPES.map((s) => (
-                    <button key={s.id} className={block.props.shape === s.id && !block.props.glb ? 'is-on' : ''} onClick={() => set({ shape: s.id, glb: '' })}>{s.label}</button>
-                  ))}
-                </div>
-              </div>
-              <label className="b-field">
-                <span className="b-label">Cor do objeto</span>
-                <input type="color" value={block.props.color} onChange={(e) => set({ color: e.target.value })} />
-              </label>
-              <div className="b-field">
-                <span className="b-label">Seu próprio modelo 3D</span>
-                <button className="b-add" onClick={() => glbInput.current.click()}><Icon name="upload" size={14} /> Enviar arquivo .glb</button>
-                <input ref={glbInput} type="file" accept=".glb,.gltf,model/gltf-binary" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) set({ glb: URL.createObjectURL(f) }); e.target.value = '' }} />
-                <small className="b-hint">Modelos feitos no Blender (exportados em glTF/.glb). Se não tiver, a Prime Page modela para você.</small>
-              </div>
-            </>
-          )}
-
-          {block.type === 'map' && (
-            <label className="b-field">
-              <span className="b-label">Endereço</span>
-              <input className="field is-sm" value={block.props.address} onChange={(e) => set({ address: e.target.value })} />
-            </label>
-          )}
-
-          {['about'].includes(block.type) && (
-            <label className="b-field">
-              <span className="b-label">Imagem</span>
-              <input type="file" accept="image/*" className="b-file" onChange={async (e) => { const f = e.target.files?.[0]; if (f) try { set({ image: await readImage(f) }) } catch (err) { alert(err.message) } }} />
-            </label>
-          )}
-
-          <ItemsEditor block={block} dispatch={dispatch} />
-        </div>
-      )}
-
-      {tab === 'theme' && (
-        <div className="b-theme">
-          <div className="b-field">
-            <span className="b-label">Paletas prontas</span>
-            <div className="b-palettes">
-              {Object.entries(THEMES).map(([k, t]) => (
-                <button key={k} className={state.themeKey === k ? 'is-on' : ''} onClick={() => dispatch({ type: 'theme', themeKey: k, patch: { ...t } })} title={t.name}>
-                  <span style={{ background: t.bg }} /><span style={{ background: t.accent }} /><span style={{ background: t.text }} />
-                  <small>{t.name}</small>
-                </button>
-              ))}
-            </div>
-          </div>
-          {[['accent', 'Cor de destaque'], ['bg', 'Fundo'], ['surface', 'Cartões'], ['text', 'Texto']].map(([k, l]) => (
-            <label key={k} className="b-field is-row">
-              <span className="b-label">{l}</span>
-              <span className="b-color"><input type="color" value={state.theme[k]} onChange={(e) => dispatch({ type: 'theme', patch: { [k]: e.target.value } })} /><code>{state.theme[k]}</code></span>
-            </label>
-          ))}
-          <label className="b-field">
-            <span className="b-label">Fonte</span>
-            <select className="field is-sm" value={state.theme.font} onChange={(e) => dispatch({ type: 'theme', patch: { font: e.target.value } })}>
-              {FONTS.map((f) => <option key={f}>{f}</option>)}
-            </select>
-          </label>
-          <label className="b-field">
-            <span className="b-label">Arredondamento: {state.theme.radius}px</span>
-            <input type="range" min="0" max="28" value={state.theme.radius} onChange={(e) => dispatch({ type: 'theme', patch: { radius: +e.target.value } })} />
-          </label>
-        </div>
-      )}
+      {tab === 'piece' && <PieceTab state={state} dispatch={dispatch} />}
+      {tab === 'image' && (imgBlock ? (
+        <ImageEditor key={imgBlock.id + state.selImg.path} block={imgBlock} path={state.selImg.path} dispatch={dispatch} onClose={() => dispatch({ type: 'select-image', blockId: imgBlock.id, path: null })} />
+      ) : (
+        <p className="b-empty">Clique em qualquer foto da prévia para modelar: formato (redondo, meia-lua, arco, orgânico…), cantos, zoom, enquadramento, filtros, borda, sombra e inclinação 3D.</p>
+      ))}
+      {tab === 'theme' && <ThemeTab state={state} dispatch={dispatch} />}
     </aside>
   )
 }
@@ -206,6 +264,12 @@ function Inspector({ state, dispatch }) {
 export default function BuildSite({ state, dispatch }) {
   const scope = useMemo(() => computeScope(state), [state])
   const device = state.device
+
+  useEffect(() => {
+    const onKey = (e) => e.key === 'Escape' && state.selImg && dispatch({ type: 'select-image', blockId: state.selImg.blockId, path: null })
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [state.selImg, dispatch])
 
   return (
     <div className="b-work">
@@ -234,8 +298,11 @@ export default function BuildSite({ state, dispatch }) {
               editing
               device={device}
               selected={state.selected}
+              selImg={state.selImg}
               onSelect={(id) => dispatch({ type: 'select', id })}
+              onSelectImage={(blockId, path) => dispatch({ type: 'select-image', blockId, path })}
               onEdit={(id, patch) => dispatch({ type: 'props', id, patch })}
+              onMedia={(blockId, path, patch) => dispatch({ type: 'media', blockId, path, patch })}
             />
           </div>
         </div>

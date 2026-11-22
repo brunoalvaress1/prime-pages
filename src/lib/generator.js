@@ -15,6 +15,8 @@ const SEGMENTS = [
   { tpl: 'oficina', words: ['oficina', 'mecanica', 'mecânica', 'carro', 'auto', 'moto', 'pneu', 'funilaria', 'logistic', 'transporte', 'frota'] },
   { tpl: 'advocacia', words: ['advoga', 'advocacia', 'juridic', 'jurídic', 'contab', 'contador', 'law', 'consultoria', 'imobiliaria', 'imobiliária'] },
   { tpl: 'academia', words: ['academia', 'personal', 'pilates', 'crossfit', 'fitness', 'gym', 'treino', 'yoga', 'dança'] },
+  { tpl: 'imobiliaria', words: ['imobiliaria', 'imobiliária', 'imovel', 'imóvel', 'imoveis', 'imóveis', 'arquitet', 'construtora', 'engenharia', 'interiores', 'casa', 'apartamento'] },
+  { tpl: 'tech', words: ['startup', 'saas', 'software', 'app', 'aplicativo', 'tecnologia', 'tech', 'plataforma', 'sistema'] },
   { tpl: 'landing', words: ['curso', 'infoproduto', 'lançamento', 'mentoria', 'ebook', 'landing', 'freelancer', 'evento', 'eventos', 'festa'] },
 ]
 

@@ -134,6 +134,7 @@ function Start({ state, dispatch, initialTab, autoRun }) {
                     <span className="tpl-meta">
                       <b>{t.name}</b>
                       <small>{t.segment}</small>
+                      <span className="tpl-tags">{t.tags.map((g) => <i key={g}>{g}</i>)}</span>
                     </span>
                     <span className="tpl-swatch" style={{ background: THEMES[t.theme].accent }} />
                   </button>

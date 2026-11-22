@@ -1,5 +1,8 @@
 // Catálogo de peças (seções) que o cliente pode encaixar no site.
 // Cada peça declara o que ela exige tecnicamente: isso alimenta o resumo do orçamento.
+// "layouts" são as variações visuais que o cliente escolhe no inspetor.
+
+export const SECTION_STYLE = { bg: 'auto', pad: 'm', align: 'left' }
 
 export const BLOCKS = {
   hero: {
@@ -7,36 +10,80 @@ export const BLOCKS = {
     part: 'A1',
     hint: 'Título forte, frase de apoio e o botão principal.',
     needs: [],
+    layouts: [
+      ['split', 'Texto + imagem'],
+      ['full', 'Imagem de fundo'],
+      ['center', 'Centralizado'],
+      ['editorial', 'Título gigante'],
+      ['3d', 'Com objeto 3D'],
+    ],
     defaults: {
+      layout: 'split',
+      kicker: '',
       title: 'O nome do seu negócio em destaque',
       subtitle: 'Uma frase curta dizendo o que você faz e para quem.',
       cta: 'Fale com a gente',
+      cta2: '',
       image: '',
-      layout: 'split',
+      shape: 'knot',
+      color: '',
     },
+  },
+  marquee: {
+    label: 'Faixa rolante',
+    part: 'A2',
+    hint: 'Frases ou palavras passando em loop.',
+    needs: [],
+    defaults: { text: 'Atendimento com hora marcada · Estacionamento próprio · Desde 2010 · Leme e região' },
   },
   about: {
     label: 'Sobre',
-    part: 'A2',
+    part: 'A3',
     hint: 'Quem é a empresa, história e diferencial.',
     needs: [],
+    layouts: [
+      ['split', 'Imagem ao lado'],
+      ['reverse', 'Imagem do outro lado'],
+      ['stacked', 'Imagem em cima'],
+    ],
     defaults: {
+      layout: 'split',
       title: 'Sobre nós',
       text: 'Conte aqui a história da empresa, há quanto tempo atende e o que a torna diferente.',
       image: '',
+      image2: '',
     },
   },
   services: {
     label: 'Serviços',
-    part: 'A3',
+    part: 'A4',
     hint: 'Lista do que você oferece.',
     needs: [],
+    layouts: [
+      ['cards', 'Cartões'],
+      ['list', 'Lista numerada'],
+      ['images', 'Com fotos'],
+    ],
     defaults: {
+      layout: 'cards',
       title: 'O que fazemos',
       items: [
-        { title: 'Serviço um', text: 'Descrição curta do serviço.' },
-        { title: 'Serviço dois', text: 'Descrição curta do serviço.' },
-        { title: 'Serviço três', text: 'Descrição curta do serviço.' },
+        { title: 'Serviço um', text: 'Descrição curta do serviço.', image: '' },
+        { title: 'Serviço dois', text: 'Descrição curta do serviço.', image: '' },
+        { title: 'Serviço três', text: 'Descrição curta do serviço.', image: '' },
+      ],
+    },
+  },
+  stats: {
+    label: 'Números',
+    part: 'A5',
+    hint: 'Seus números: anos, clientes, avaliações.',
+    needs: [],
+    defaults: {
+      items: [
+        { title: '00+', text: 'anos de experiência' },
+        { title: '000', text: 'clientes atendidos' },
+        { title: '4,9', text: 'nota no Google' },
       ],
     },
   },
@@ -45,7 +92,12 @@ export const BLOCKS = {
     part: 'B1',
     hint: 'Fotos do espaço, produtos ou trabalhos.',
     needs: [],
-    defaults: { title: 'Galeria', images: ['', '', '', '', '', ''] },
+    layouts: [
+      ['grid', 'Grade'],
+      ['bento', 'Mosaico'],
+      ['strip', 'Faixa rolável'],
+    ],
+    defaults: { layout: 'grid', title: 'Galeria', images: ['', '', '', '', '', ''] },
   },
   products: {
     label: 'Loja / produtos',
@@ -91,6 +143,20 @@ export const BLOCKS = {
       items: [
         { title: 'Básico', price: 'R$ 00', text: 'O que está incluso.' },
         { title: 'Completo', price: 'R$ 00', text: 'O que está incluso.' },
+      ],
+    },
+  },
+  steps: {
+    label: 'Passo a passo',
+    part: 'B6',
+    hint: 'Como funciona o atendimento, em etapas.',
+    needs: [],
+    defaults: {
+      title: 'Como funciona',
+      items: [
+        { title: 'Você entra em contato', text: 'Pelo site ou WhatsApp.' },
+        { title: 'Avaliamos juntos', text: 'Entendemos o que você precisa.' },
+        { title: 'Resolvemos', text: 'Com prazo e preço combinados.' },
       ],
     },
   },
@@ -153,25 +219,32 @@ export const BLOCKS = {
     part: 'D1',
     hint: 'Peça 3D interativa que gira com o mouse.',
     needs: ['3d'],
-    defaults: { title: 'Veja de todos os ângulos', shape: 'knot', color: '#1f6fff', glb: '', text: 'Arraste para girar.' },
+    defaults: { title: 'Veja de todos os ângulos', shape: 'knot', material: 'glossy', color: '', glb: '', text: 'Arraste para girar.' },
+  },
+  cta: {
+    label: 'Chamada final',
+    part: 'D2',
+    hint: 'Faixa de destaque com o botão principal.',
+    needs: [],
+    defaults: { title: 'Pronto para começar?', text: 'Fale com a gente e receba atendimento no mesmo dia.', cta: 'Chamar no WhatsApp', style: { bg: 'accent', pad: 'l', align: 'center' } },
   },
   map: {
     label: 'Mapa e endereço',
-    part: 'D2',
+    part: 'D3',
     hint: 'Endereço com mapa do Google.',
     needs: [],
-    defaults: { title: 'Onde estamos', address: 'Rua Exemplo, 123, Leme - SP' },
+    defaults: { title: 'Onde estamos', address: 'Rua Exemplo, 123, Leme - SP', hours: 'Seg a sex, 9h às 18h · Sáb, 9h às 13h' },
   },
   contact: {
     label: 'Contato',
-    part: 'D3',
+    part: 'D4',
     hint: 'Formulário e WhatsApp.',
     needs: [],
     defaults: { title: 'Fale com a gente', text: 'Responderemos o mais rápido possível.', whatsapp: '' },
   },
   footer: {
     label: 'Rodapé',
-    part: 'D4',
+    part: 'D5',
     hint: 'Contatos, redes e direitos.',
     needs: [],
     defaults: { text: '© Seu negócio. Todos os direitos reservados.' },
@@ -184,17 +257,34 @@ let counter = 0
 export function makeBlock(type, overrides = {}) {
   counter += 1
   const def = BLOCKS[type]
+  const { style, media, ...rest } = overrides
   return {
     id: `${type}-${Date.now().toString(36)}-${counter}`,
     type,
-    props: structuredClone({ ...def.defaults, ...overrides }),
+    props: structuredClone({
+      ...def.defaults,
+      ...rest,
+      style: { ...SECTION_STYLE, ...(def.defaults.style || {}), ...(style || {}) },
+      media: media || {},
+    }),
   }
 }
 
 export const SHAPES = [
   { id: 'knot', label: 'Nó' },
   { id: 'sphere', label: 'Esfera viva' },
+  { id: 'gem', label: 'Joia' },
+  { id: 'capsule', label: 'Cápsula' },
+  { id: 'rings', label: 'Anéis' },
+  { id: 'cluster', label: 'Constelação' },
   { id: 'box', label: 'Caixa / livro' },
   { id: 'torus', label: 'Anel' },
   { id: 'phone', label: 'Celular' },
+]
+
+export const MATERIALS = [
+  { id: 'glossy', label: 'Brilhante' },
+  { id: 'metal', label: 'Metal' },
+  { id: 'glass', label: 'Vidro' },
+  { id: 'matte', label: 'Fosco' },
 ]

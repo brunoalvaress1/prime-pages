@@ -3,7 +3,7 @@ import { makeBlock } from '../data/blocks.js'
 import { SYSTEMS } from '../data/systems.js'
 import { THEMES } from '../data/templates.js'
 
-const KEY = 'primepage:builder:v1'
+const KEY = 'primepage:builder:v2'
 
 export function emptyProject() {
   return {
@@ -63,6 +63,7 @@ function reducer(state, a) {
         reference: a.reference ?? state.reference,
         prompt: a.prompt ?? state.prompt,
         selected: a.blocks[0]?.id ?? null,
+        selImg: null,
         createdAt: Date.now(),
         remoteId: null,
       }
@@ -81,7 +82,7 @@ function reducer(state, a) {
       return { ...state, blocks, selected: block.id }
     }
     case 'remove':
-      return { ...state, blocks: state.blocks.filter((b) => b.id !== a.id), selected: state.selected === a.id ? null : state.selected }
+      return { ...state, blocks: state.blocks.filter((b) => b.id !== a.id), selected: state.selected === a.id ? null : state.selected, selImg: state.selImg?.blockId === a.id ? null : state.selImg }
     case 'duplicate': {
       const i = state.blocks.findIndex((b) => b.id === a.id)
       const copy = makeBlock(state.blocks[i].type, state.blocks[i].props)
@@ -98,7 +99,34 @@ function reducer(state, a) {
     case 'reorder':
       return { ...state, blocks: move(state.blocks, a.from, a.to) }
     case 'select':
-      return { ...state, selected: a.id }
+      return { ...state, selected: a.id, selImg: state.selImg?.blockId === a.id ? state.selImg : null }
+    case 'select-image':
+      return { ...state, selected: a.blockId, selImg: a.path ? { blockId: a.blockId, path: a.path } : null }
+    case 'media':
+      return {
+        ...state,
+        blocks: state.blocks.map((b) => {
+          if (b.id !== a.blockId) return b
+          const media = { ...(b.props.media || {}) }
+          if (a.reset) delete media[a.path]
+          else media[a.path] = { ...(media[a.path] || {}), ...a.patch }
+          return { ...b, props: { ...b.props, media } }
+        }),
+      }
+    case 'media-all': {
+      // aplica o mesmo estilo em todas as imagens da seção
+      return {
+        ...state,
+        blocks: state.blocks.map((b) => {
+          if (b.id !== a.blockId) return b
+          const media = {}
+          a.paths.forEach((p) => (media[p] = { ...a.style }))
+          return { ...b, props: { ...b.props, media: { ...(b.props.media || {}), ...media } } }
+        }),
+      }
+    }
+    case 'section-style':
+      return { ...state, blocks: state.blocks.map((b) => (b.id === a.id ? { ...b, props: { ...b.props, style: { ...(b.props.style || {}), ...a.patch } } } : b)) }
     case 'props':
       return { ...state, blocks: state.blocks.map((b) => (b.id === a.id ? { ...b, props: { ...b.props, ...a.patch } } : b)) }
     case 'module': {
