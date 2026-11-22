@@ -145,16 +145,46 @@ function Img({ block, path, className = '', label = 'Adicionar imagem' }) {
   )
 }
 
+// No modo "Testar site" (onAction definido) os botões e cartões navegam para outras telas.
+const BlockCtx = createContext(null)
+
+function Btn({ action, payload, ghost, small, children }) {
+  const { onAction } = useContext(Ctx)
+  const block = useContext(BlockCtx)
+  const cls = `cs-btn ${ghost ? 'is-ghost' : ''} ${small ? 'is-small' : ''}`
+  if (!onAction) return <span className={cls}>{children}</span>
+  return (
+    <button type="button" className={cls} onClick={(e) => { e.stopPropagation(); onAction(action, payload, block) }}>
+      {children}
+    </button>
+  )
+}
+
+function useLive(block) {
+  const { onAction } = useContext(Ctx)
+  return (action, payload) =>
+    onAction
+      ? {
+          'data-live': '',
+          role: 'button',
+          tabIndex: 0,
+          onClick: (e) => { e.stopPropagation(); onAction(action, payload, block) },
+          onKeyDown: (e) => e.key === 'Enter' && onAction(action, payload, block),
+        }
+      : {}
+}
+
 function Items({ block, edit, render }) {
   const set = (i, patch) => edit({ items: block.props.items.map((it, j) => (j === i ? { ...it, ...patch } : it)) })
   return block.props.items.map((it, i) => render(it, (patch) => set(i, patch), i))
 }
 
-function Three({ p, accent, className }) {
+function Three({ p, accent, className, interactive = true }) {
+  if (useContext(Ctx).no3d) return <div className={className + " cs-3d-static"} aria-hidden="true"><span style={{ background: p.color || accent }} /></div>
   return (
     <div className={className}>
       <Suspense fallback={<div className="cs-3d-loading">Carregando 3D…</div>}>
-        <Scene3D shape={p.shape} color={p.color || accent} material={p.material} glb={p.glb} />
+        <Scene3D shape={p.shape} color={p.color || accent} material={p.material} glb={p.glb} interactive={interactive} />
       </Suspense>
     </div>
   )
@@ -162,11 +192,14 @@ function Three({ p, accent, className }) {
 
 function Section({ block, edit, theme }) {
   const p = block.props
+  const live = useLive(block)
+  const { onAction: liveAction, no3d: staticRender } = useContext(Ctx)
+  const isLive = !!liveAction
   const t = (key, as, cls, multiline) => <T as={as} className={cls} value={p[key]} multiline={multiline} onChange={(v) => edit({ [key]: v })} />
   const btns = (
     <div className="cs-btns">
-      <span className="cs-btn">{t('cta', 'span', '')}</span>
-      {p.cta2 ? <span className="cs-btn is-ghost">{t('cta2', 'span', '')}</span> : null}
+      <Btn action="primary">{t('cta', 'span', '')}</Btn>
+      {p.cta2 ? <Btn action="secondary" ghost>{t('cta2', 'span', '')}</Btn> : null}
     </div>
   )
 
@@ -184,6 +217,7 @@ function Section({ block, edit, theme }) {
             {btns}
           </div>
           {(L === 'split' || L === 'editorial') && <Img block={block} path="image" className="cs-hero-img" />}
+          {p.float3d && L !== '3d' && <Three p={p.float3d} accent={theme.accent} className={`cs-float3d at-${p.float3d.pos || 'right'}`} interactive={false} />}
         </header>
       )
     }
@@ -220,7 +254,7 @@ function Section({ block, edit, theme }) {
               block={block}
               edit={edit}
               render={(it, set, i) => (
-                <article key={i} className="cs-item">
+                <article key={i} className="cs-item" {...live('service', i)}>
                   {L === 'images' && <Img block={block} path={`items.${i}.image`} />}
                   {L === 'list' && <span className="cs-num">{String(i + 1).padStart(2, '0')}</span>}
                   <div>
@@ -262,7 +296,7 @@ function Section({ block, edit, theme }) {
               block={block}
               edit={edit}
               render={(it, set, i) => (
-                <article key={i} className="cs-item">
+                <article key={i} className="cs-item" {...(block.type === 'menu' ? live('menu-add', i) : block.type === 'pricing' ? live('plan', i) : {})}>
                   {block.type === 'testimonials' && <Icon name="quote" className="cs-quote" />}
                   {block.type === 'steps' && <span className="cs-step-n">{i + 1}</span>}
                   <T as="h3" className="cs-h3" value={it.title} onChange={(v) => set({ title: v })} />
@@ -284,11 +318,11 @@ function Section({ block, edit, theme }) {
               block={block}
               edit={edit}
               render={(it, set, i) => (
-                <article key={i} className="cs-card">
+                <article key={i} className="cs-card" {...(block.type === 'products' ? live('product', i) : {})}>
                   <Img block={block} path={`items.${i}.image`} />
                   <T as="h3" className="cs-h3" value={it.title} onChange={(v) => set({ title: v })} />
                   {it.price !== undefined ? <T as="strong" className="cs-price" value={it.price} onChange={(v) => set({ price: v })} /> : <T as="p" className="cs-p" value={it.text} onChange={(v) => set({ text: v })} />}
-                  {block.type === 'products' && <span className="cs-btn is-small">Comprar</span>}
+                  {block.type === 'products' && <Btn action="add" payload={i} small>Comprar</Btn>}
                 </article>
               )}
             />
@@ -316,7 +350,7 @@ function Section({ block, edit, theme }) {
               <div key={d} className="cs-cal-day">
                 <b>{d}</b>
                 {['09:00', '10:30', '14:00', '16:30'].map((h, j) => (
-                  <span key={h} className={(i + j) % 3 === 0 ? 'is-taken' : i === 2 && j === 1 ? 'is-on' : ''}>{h}</span>
+                  <span key={h} className={(i + j) % 3 === 0 ? 'is-taken' : i === 2 && j === 1 ? 'is-on' : ''} {...((i + j) % 3 === 0 ? {} : live('booking', { day: d, hour: h }))}>{h}</span>
                 ))}
               </div>
             ))}
@@ -329,7 +363,7 @@ function Section({ block, edit, theme }) {
           {t('title', 'h2', 'cs-h2')}
           <div className="cs-grid">
             {[1, 2, 3].map((n) => (
-              <article key={n} className="cs-card">
+              <article key={n} className="cs-card" {...live('post', n)}>
                 <div className="cs-img is-empty"><div className="cs-img-clip"><span className="cs-img-ph"><Icon name="image" /></span></div></div>
                 <h3 className="cs-h3">Título da publicação {n}</h3>
                 <p className="cs-p">Você publica pelo painel.</p>
@@ -346,9 +380,9 @@ function Section({ block, edit, theme }) {
             {t('text', 'p', 'cs-p')}
           </div>
           <form className="cs-form" onSubmit={(e) => e.preventDefault()}>
-            <label>E-mail<input disabled placeholder="voce@email.com" /></label>
-            <label>Senha<input disabled type="password" placeholder="••••••" /></label>
-            <span className="cs-btn">Entrar</span>
+            <label>E-mail<input disabled={!isLive} placeholder="voce@email.com" /></label>
+            <label>Senha<input disabled={!isLive} type="password" placeholder="••••••" /></label>
+            <Btn action="login">Entrar</Btn>
           </form>
         </section>
       )
@@ -367,7 +401,7 @@ function Section({ block, edit, theme }) {
         <section className="cs-cta">
           {t('title', 'h2', 'cs-h2')}
           {t('text', 'p', 'cs-lead', true)}
-          <div className="cs-btns"><span className="cs-btn">{t('cta', 'span', '')}</span></div>
+          <div className="cs-btns"><Btn action="primary">{t('cta', 'span', '')}</Btn></div>
         </section>
       )
     case 'map':
@@ -378,7 +412,7 @@ function Section({ block, edit, theme }) {
             {t('address', 'p', 'cs-p')}
             {p.hours !== undefined && t('hours', 'p', 'cs-p cs-hours')}
           </div>
-          <iframe title="Mapa" loading="lazy" src={`https://www.google.com/maps?q=${encodeURIComponent(p.address)}&output=embed`} />
+          {staticRender ? <div className="cs-map-ph" aria-hidden="true"><Icon name="image" /> Mapa</div> : <iframe title="Mapa" loading="lazy" src={`https://www.google.com/maps?q=${encodeURIComponent(p.address)}&output=embed`} />}
         </section>
       )
     case 'contact':
@@ -389,9 +423,9 @@ function Section({ block, edit, theme }) {
             {t('text', 'p', 'cs-p', true)}
           </div>
           <form className="cs-form" onSubmit={(e) => e.preventDefault()}>
-            <label>Nome<input disabled placeholder="Seu nome" /></label>
-            <label>Mensagem<textarea disabled rows="3" placeholder="Como podemos ajudar?" /></label>
-            <span className="cs-btn">Enviar</span>
+            <label>Nome<input disabled={!isLive} placeholder="Seu nome" /></label>
+            <label>Mensagem<textarea disabled={!isLive} rows="3" placeholder="Como podemos ajudar?" /></label>
+            <Btn action="contact-sent">Enviar</Btn>
           </form>
         </section>
       )
@@ -402,7 +436,7 @@ function Section({ block, edit, theme }) {
   }
 }
 
-export default function SiteRenderer({ project, editing, selected, selImg, onSelect, onSelectImage, onEdit, onMedia, device }) {
+export default function SiteRenderer({ project, editing, selected, selImg, onSelect, onSelectImage, onEdit, onMedia, device, onAction, cartCount = 0, signedIn, page, no3d }) {
   const th = project.theme
   const style = {
     '--cs-bg': th.bg,
@@ -415,30 +449,53 @@ export default function SiteRenderer({ project, editing, selected, selImg, onSel
     '--cs-font': `'${th.font} Variable', '${th.font}', system-ui, sans-serif`,
     '--cs-head': `'${th.headingFont || th.font} Variable', '${th.headingFont || th.font}', system-ui, sans-serif`,
   }
-  const ctx = { editing, selImg, onSelectImage, onEdit, onMedia }
+  const ctx = { editing, selImg, onSelectImage, onEdit, onMedia, onAction, no3d }
+  const navBlocks = project.blocks.filter((b) => !['hero', 'footer', 'marquee', 'stats', 'cta'].includes(b.type) && b.props.title).slice(0, 4)
+  const hasShop = project.blocks.some((b) => b.type === 'products' || b.type === 'menu')
+  const hasLogin = project.blocks.some((b) => b.type === 'login')
+  const footer = project.blocks.find((b) => b.type === 'footer')
   return (
     <Ctx.Provider value={ctx}>
-      <div className={`cs-site is-${device || 'desktop'} btn-${th.button || 'solid'} head-${th.headCase || 'normal'}`} style={style}>
+      <div className={`cs-site is-${device || 'desktop'} btn-${th.button || 'solid'} head-${th.headCase || 'normal'} ${onAction ? 'is-live' : ''}`} style={style}>
         <nav className="cs-nav">
-          <strong>{project.name}</strong>
-          <span>{project.blocks.filter((b) => !['hero', 'footer', 'marquee', 'stats', 'cta'].includes(b.type)).slice(0, 4).map((b) => b.props.title?.split(' ').slice(0, 2).join(' ')).join('   ')}</span>
-          <em className="cs-nav-cta">{project.blocks.find((b) => b.type === 'hero')?.props.cta || 'Contato'}</em>
+          {onAction ? <button type="button" className="cs-nav-brand" onClick={() => onAction('home')}>{project.name}</button> : <strong>{project.name}</strong>}
+          {onAction ? (
+            <span className="cs-nav-links">
+              {navBlocks.map((b) => <button type="button" key={b.id} onClick={() => onAction('scroll', b.id)}>{b.props.title.split(' ').slice(0, 2).join(' ')}</button>)}
+            </span>
+          ) : (
+            <span>{navBlocks.map((b) => b.props.title.split(' ').slice(0, 2).join(' ')).join('   ')}</span>
+          )}
+          {onAction && hasLogin && <button type="button" className="cs-nav-icon" aria-label="Minha conta" onClick={() => onAction(signedIn ? 'account' : 'login-page')}><Icon name="lock" size={18} />{signedIn ? <small>Conta</small> : <small>Entrar</small>}</button>}
+          {onAction && hasShop && <button type="button" className="cs-nav-icon" aria-label="Carrinho" onClick={() => onAction('cart')}><Icon name="pay" size={18} /><small>Carrinho</small>{cartCount > 0 && <i>{cartCount}</i>}</button>}
+          {onAction ? <button type="button" className="cs-nav-cta" onClick={() => onAction('primary')}>{project.blocks.find((b) => b.type === 'hero')?.props.cta || 'Contato'}</button> : <em className="cs-nav-cta">{project.blocks.find((b) => b.type === 'hero')?.props.cta || 'Contato'}</em>}
         </nav>
-        {project.blocks.length === 0 && <div className="cs-empty">Nenhuma peça encaixada ainda. Escolha peças no painel.</div>}
-        {project.blocks.map((b) => {
-          const s = b.props.style || {}
-          return (
-            <div
-              key={b.id}
-              className={`cs-block bg-${s.bg || 'auto'} pad-${s.pad || 'm'} align-${s.align || 'left'} ${editing ? 'is-editing' : ''} ${selected === b.id ? 'is-selected' : ''}`}
-              onClickCapture={() => editing && onSelect?.(b.id)}
-              data-block={b.id}
-              data-part={editing ? BLOCK_LABEL(b.type) : undefined}
-            >
-              <Section block={b} theme={th} edit={(patch) => onEdit?.(b.id, patch)} />
-            </div>
-          )
-        })}
+        {page ? (
+          <>
+            <div className="cs-page">{page}</div>
+            {footer && <div className="cs-block"><BlockCtx.Provider value={footer}><Section block={footer} theme={th} edit={() => {}} /></BlockCtx.Provider></div>}
+          </>
+        ) : (
+          <>
+            {project.blocks.length === 0 && <div className="cs-empty">Nenhuma peça encaixada ainda. Escolha peças no painel.</div>}
+            {project.blocks.map((b) => {
+              const s = b.props.style || {}
+              return (
+                <div
+                  key={b.id}
+                  className={`cs-block bg-${s.bg || 'auto'} pad-${s.pad || 'm'} align-${s.align || 'left'} ${editing ? 'is-editing' : ''} ${selected === b.id ? 'is-selected' : ''}`}
+                  onClickCapture={() => editing && onSelect?.(b.id)}
+                  data-block={b.id}
+                  data-part={editing ? BLOCK_LABEL(b.type) : undefined}
+                >
+                  <BlockCtx.Provider value={b}>
+                    <Section block={b} theme={th} edit={(patch) => onEdit?.(b.id, patch)} />
+                  </BlockCtx.Provider>
+                </div>
+              )
+            })}
+          </>
+        )}
       </div>
     </Ctx.Provider>
   )

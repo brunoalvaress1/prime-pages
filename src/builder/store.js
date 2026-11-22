@@ -19,7 +19,7 @@ export function emptyProject() {
     blocks: [],
     selected: null,
     device: 'desktop',
-    system: { type: 'oficina', modules: [...SYSTEMS[0].defaults], users: '2 a 5', notes: '' },
+    system: { type: 'oficina', stage: 'studio', modules: [...SYSTEMS[0].defaults], users: '2 a 5', notes: '', brand: { name: '', color: '#1f6fff', logo: '' }, features: {} },
     extras: { hasDomain: false, hasLogo: false, copy: 'prime', deadline: '', admin: false },
     createdAt: Date.now(),
     remoteId: null,
@@ -69,8 +69,31 @@ function reducer(state, a) {
       }
     case 'load-system': {
       const sys = SYSTEMS.find((s) => s.id === a.id)
-      return { ...state, kind: 'system', step: 'build', origin: 'template', name: sys.name, system: { ...state.system, type: sys.id, modules: [...sys.defaults] }, createdAt: Date.now(), remoteId: null }
+      if (sys.id === 'sob-medida') return reducer(state, { type: 'start-interview' })
+      return {
+        ...state,
+        kind: 'system',
+        step: 'build',
+        origin: 'template',
+        name: sys.name,
+        system: { ...state.system, type: sys.id, stage: 'studio', modules: [...sys.defaults], brand: { name: sys.name, color: '#1f6fff', logo: '' }, features: {}, kpis: null, answers: null, answerLabels: null, prompt: '' },
+        createdAt: Date.now(),
+        remoteId: null,
+        projectId: null,
+      }
     }
+    case 'start-interview':
+      return {
+        ...state,
+        kind: 'system',
+        step: 'build',
+        origin: 'prompt',
+        name: 'Meu sistema',
+        system: { ...emptyProject().system, type: 'servicos', stage: 'interview', prompt: a.prompt || '' },
+        createdAt: Date.now(),
+        remoteId: null,
+        projectId: null,
+      }
     case 'theme':
       return { ...state, theme: { ...state.theme, ...a.patch }, themeKey: a.themeKey ?? 'custom' }
     case 'add': {

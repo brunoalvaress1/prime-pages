@@ -35,6 +35,7 @@ const P = {
   instagram: 'M4 4h16v16H4z M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z M16.5 7.5h.01',
   mail: 'M3 6h18v12H3z M3 7l9 6 9-6',
   reset: 'M4 12a8 8 0 1 0 2.3-5.6 M4 4v4h4',
+  pause: 'M9 5v14 M15 5v14',
 }
 
 export default function Icon({ name, className = '', size = 18 }) {

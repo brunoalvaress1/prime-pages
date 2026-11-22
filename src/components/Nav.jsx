@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom'
 import Logo from './Logo.jsx'
 import Icon from './Icon.jsx'
+import { useAuth } from '../lib/useAuth.jsx'
 
 const LINKS = [
   { to: '/#como-funciona', label: 'Como funciona' },
@@ -12,6 +13,7 @@ const LINKS = [
 ]
 
 export default function Nav() {
+  const { user } = useAuth()
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
@@ -34,6 +36,9 @@ export default function Nav() {
             </Link>
           ))}
         </nav>
+        <Link to={user ? (user.isAdmin ? '/admin' : '/conta') : '/entrar'} className="nav-account" onClick={() => setOpen(false)}>
+          {user ? (user.isAdmin ? 'Admin' : 'Minha conta') : 'Entrar'}
+        </Link>
         <NavLink to="/construir" className="nav-build" onClick={() => setOpen(false)}>
           <span className="part-no">A1</span>
           Construa o seu site

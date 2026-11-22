@@ -211,3 +211,14 @@
   .is-services.is-list .cs-item { grid-template-columns: 48px 1fr; }
   .cs-about-second { width: 46% !important; right: 0; bottom: -6%; }
 }
+
+/* objeto 3D flutuante sobre a capa */
+.cs-float3d { position: absolute; z-index: 3; width: clamp(140px, 24cqi, 340px); aspect-ratio: 1; pointer-events: none; filter: drop-shadow(0 30px 30px rgba(0, 0, 0, 0.35)); }
+.cs-float3d.at-right { right: 3cqi; top: 6cqi; }
+.cs-float3d.at-left { left: 46%; bottom: 4cqi; }
+.cs-float3d.at-corner { right: 2cqi; bottom: 2cqi; }
+.cs-hero.is-full .cs-float3d.at-right { right: 6cqi; top: auto; bottom: 8cqi; width: clamp(160px, 28cqi, 400px); }
+@container (max-width: 640px) { .cs-float3d { width: 130px; } .cs-float3d.at-left { left: auto; right: 10px; } }
+.cs-3d-static { display: grid; place-items: center; }
+.cs-3d-static span { width: 46%; aspect-ratio: 1; border-radius: 50%; opacity: 0.85; box-shadow: inset -18px -24px 40px rgba(0,0,0,0.35), inset 12px 14px 30px rgba(255,255,255,0.35); }
+.cs-map-ph { height: 300px; border-radius: var(--cs-radius); display: grid; place-content: center; gap: 6px; justify-items: center; background: color-mix(in srgb, var(--sec-text) 8%, var(--sec-bg)); color: var(--sec-muted); }

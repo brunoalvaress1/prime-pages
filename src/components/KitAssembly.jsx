@@ -91,9 +91,11 @@ function Part({ p, index, clock, reduced }) {
   const tmp = useMemo(() => new THREE.Vector3(), [])
 
   useFrame(() => {
-    const t = reduced ? 1 : ease((clock.current - 0.5 - index * 0.16) / 1.1)
+    const c = clock.cycle ?? 0
+    const lift = clock.lift === index ? clock.liftAmt : 0
+    const t = reduced ? 1 : c < 10 ? ease((c - index * 0.16) / 1.1) : 1 - ease((c - 10 - (PARTS.length - 1 - index) * 0.12) / 1.1)
     // Vista explodida: após encaixar, as peças se afastam levemente em z.
-    const explode = clock.explode * (0.18 + (index % 3) * 0.14)
+    const explode = clock.explode * (0.18 + (index % 3) * 0.14) + lift + Math.sin(clock.current * 1.3 + index) * 0.04 * t
     tmp.lerpVectors(from, to, t)
     tmp.z += explode
     ref.current.position.copy(tmp)
@@ -128,7 +130,8 @@ function Sprue({ clock }) {
     return r
   }, [])
   useFrame(() => {
-    const fade = 1 - ease((clock.current - 1.2) / 1.2)
+    const c = clock.cycle ?? 0
+    const fade = c < 10 ? 1 - ease((c - 1.2) / 1.2) : ease((c - 10.4) / 1)
     ref.current.scale.setScalar(0.9 + fade * 0.1)
     ref.current.children.forEach((m) => (m.material.opacity = fade * 0.9))
     ref.current.visible = fade > 0.01
@@ -149,10 +152,16 @@ function Rig({ clock, pointer, scrollRef, reduced, children }) {
   const g = useRef()
   useFrame((state, dt) => {
     clock.current += dt
+    // ciclo de 14s: monta, respira, destaca peças, desmonta e remonta
+    clock.cycle = reduced ? 5 : (clock.current + 13.5) % 14
+    const hold = clock.cycle > 3 && clock.cycle < 9.6
+    clock.lift = hold ? Math.floor((clock.cycle - 3) / 1.1) % PARTS.length : -1
+    clock.liftAmt = hold ? Math.sin((((clock.cycle - 3) % 1.1) / 1.1) * Math.PI) * 0.7 : 0
+    const time = clock.current
     const s = scrollRef.current
-    clock.explode = THREE.MathUtils.damp(clock.explode, 0.6 + s * 2.2, 4, dt)
-    const tx = reduced ? -0.42 : -0.42 + pointer.current.y * 0.12
-    const ty = reduced ? 0.55 : 0.55 + pointer.current.x * 0.22
+    clock.explode = THREE.MathUtils.damp(clock.explode, 0.45 + (1 + Math.sin(time * 0.8)) * 0.35 + s * 2.2, 4, dt)
+    const tx = reduced ? -0.42 : -0.42 + Math.sin(time * 0.27) * 0.08 + pointer.current.y * 0.12
+    const ty = reduced ? 0.55 : 0.55 + Math.sin(time * 0.35) * 0.3 + pointer.current.x * 0.22
     g.current.rotation.x = THREE.MathUtils.damp(g.current.rotation.x, tx, 3, dt)
     g.current.rotation.y = THREE.MathUtils.damp(g.current.rotation.y, ty, 3, dt)
     g.current.rotation.z = 0.12

@@ -7,10 +7,15 @@ import { BLOCKS, BLOCK_ORDER, makeBlock } from '../data/blocks.js'
 import { SYSTEMS, MODULES } from '../data/systems.js'
 import { TEMPLATES, THEMES } from '../data/templates.js'
 import { FLAGS, buildWhatsAppMessage, WHATSAPP_NUMBER } from '../lib/scope.js'
-import { PROJECTS } from '../data/projects.js'
+import ProjectsCarousel from '../components/ProjectsCarousel.jsx'
+import InView from '../components/InView.jsx'
 import '../styles/home.css'
+import '../styles/carousel.css'
+import '../styles/home3d.css'
 
 const KitAssembly = lazy(() => import('../components/KitAssembly.jsx'))
+const PartsScene = lazy(() => import('../components/PartsScene.jsx'))
+const SystemScene = lazy(() => import('../components/SystemScene.jsx'))
 
 const FLAG_ICON = { payments: 'pay', database: 'db', auth: 'lock', admin: 'panel', notifications: 'bell', integrations: 'plug', reports: 'chart', '3d': 'cube', mobile: 'phone' }
 
@@ -173,55 +178,70 @@ function Manual() {
   )
 }
 
+const GROUP_NAMES = { A: 'Estrutura', B: 'Conteúdo e vendas', C: 'Confiança', D: 'Extras e contato' }
+
 function PartsTree() {
   const [active, setActive] = useState('products')
   const b = BLOCKS[active]
-  const groups = ['A', 'B', 'C', 'D'].map((g) => BLOCK_ORDER.filter((k) => BLOCKS[k].part.startsWith(g)))
+  const group = b.part[0]
+  const alt = Number(b.part.slice(1)) % 2 === 0
   return (
     <section className="parts" id="pecas">
-      <div className="wrap parts-grid">
+      <div className="wrap">
         <header className="parts-head" data-reveal>
           <h2>Cada peça diz o que custa construir.</h2>
-          <p>Uma galeria é simples. Uma loja precisa de pagamento, banco de dados e painel. Enquanto você monta, cada peça mostra o que exige, e isso vai junto no pedido.</p>
+          <p>Uma galeria é simples. Uma loja precisa de pagamento, banco de dados e painel. Escolha uma peça e veja na hora o que ela exige. Tudo isso vai junto no seu pedido.</p>
         </header>
 
-        <div className="sprue" data-reveal role="listbox" aria-label="Peças disponíveis">
-          {groups.map((g, gi) => (
-            <div key={gi} className="sprue-row">
-              <span className="sprue-letter part-no">{'ABCD'[gi]}</span>
-              {g.map((k) => (
-                <button
-                  key={k}
-                  role="option"
-                  aria-selected={active === k}
-                  className={`sprue-part ${active === k ? 'is-on' : ''} ${BLOCKS[k].needs.length ? 'has-needs' : ''}`}
-                  onMouseEnter={() => setActive(k)}
-                  onFocus={() => setActive(k)}
-                  onClick={() => setActive(k)}
-                >
-                  <span className="part-no">{BLOCKS[k].part}</span>
-                  {BLOCKS[k].label}
-                  {BLOCKS[k].needs.length > 0 && <i className="sprue-dot" aria-label="exige recursos" />}
-                </button>
-              ))}
-            </div>
-          ))}
-        </div>
-
-        <aside className="part-card" aria-live="polite">
-          <span className="part-no">PEÇA {b.part}</span>
-          <h3>{b.label}</h3>
-          <p>{b.hint}</p>
-          <div className="part-needs">
-            {b.needs.length === 0 ? (
-              <span className="need is-none"><Icon name="check" size={16} /> Sem custo técnico extra</span>
-            ) : (
-              b.needs.map((n) => (
-                <span key={n} className="need"><Icon name={FLAG_ICON[n]} size={16} /> {FLAGS[n].label}</span>
-              ))
-            )}
+        <div className="pt-board">
+          <div className="pt-groups" role="listbox" aria-label="Peças disponíveis">
+            {Object.entries(GROUP_NAMES).map(([g, name]) => (
+              <div key={g} className="pt-group">
+                <span className="pt-group-head"><b className="part-no">{g}</b>{name}</span>
+                <div className="pt-parts">
+                  {BLOCK_ORDER.filter((k) => BLOCKS[k].part.startsWith(g)).map((k) => (
+                    <button
+                      key={k}
+                      role="option"
+                      aria-selected={active === k}
+                      className={`pt-part ${active === k ? 'is-on' : ''}`}
+                      onMouseEnter={() => setActive(k)}
+                      onFocus={() => setActive(k)}
+                      onClick={() => setActive(k)}
+                    >
+                      <span className="part-no">{BLOCKS[k].part}</span>
+                      <span className="pt-name">{BLOCKS[k].label}</span>
+                      {BLOCKS[k].needs.length > 0 ? <i className="pt-cost">{BLOCKS[k].needs.length}</i> : <i className="pt-free" aria-label="sem custo extra"><Icon name="check" size={12} /></i>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-        </aside>
+
+          <div className="pt-stage">
+            <InView className="pt-canvas" fallback={<div className="pt-canvas-ph" />}>
+              <Suspense fallback={<div className="pt-canvas-ph" />}>
+                <PartsScene group={group} alt={alt} needs={b.needs} label={`${b.part} · ${b.label}`} />
+              </Suspense>
+            </InView>
+            <div className="pt-card" aria-live="polite">
+              <div>
+                <span className="part-no">PEÇA {b.part} · {GROUP_NAMES[group]}</span>
+                <h3>{b.label}</h3>
+                <p>{b.hint}</p>
+              </div>
+              <div className="pt-needs">
+                {b.needs.length === 0 ? (
+                  <span className="need is-none"><Icon name="check" size={16} /> Sem custo técnico extra</span>
+                ) : (
+                  b.needs.map((n) => <span key={n} className="need"><Icon name={FLAG_ICON[n]} size={16} /> {FLAGS[n].label}</span>)
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+        <p className="pt-legend"><i className="pt-cost">2</i> número de recursos técnicos que a peça exige <i className="pt-free"><Icon name="check" size={12} /></i> sem custo extra</p>
       </div>
     </section>
   )
@@ -231,21 +251,23 @@ function Systems() {
   const list = SYSTEMS.filter((s) => s.flow.length)
   const [id, setId] = useState(list[0].id)
   const sys = list.find((s) => s.id === id)
-  const [step, setStep] = useState(0)
-  const ref = useRef(null)
+  const steps = sys.flow.map((f) => ({ label: MODULES[f.module].label, who: f.who, what: f.what }))
+  const [at, setAt] = useState(0)
+  const [play, setPlay] = useState(true)
 
+  useEffect(() => setAt(0), [id])
   useEffect(() => {
-    setStep(0)
-    const t = setInterval(() => setStep((s) => (s + 1) % sys.flow.length), 1700)
+    if (!play) return
+    const t = setInterval(() => setAt((s) => (s + 1) % steps.length), 2200)
     return () => clearInterval(t)
-  }, [id, sys.flow.length])
+  }, [id, play, steps.length])
 
   return (
-    <section className="systems" id="sistemas" ref={ref}>
+    <section className="systems" id="sistemas">
       <div className="wrap">
         <header className="systems-head" data-reveal>
           <h2>Sistemas também vêm em kit.</h2>
-          <p>Escolha o tipo de sistema, ligue os módulos que fazem sentido e veja como ele funcionaria no dia a dia da sua empresa, antes de gastar um real.</p>
+          <p>Veja como o sistema trabalha no dia a dia: cada bloco é uma parte do sistema e a informação vai passando de um para o outro, do primeiro contato até o relatório do dono.</p>
         </header>
 
         <div className="systems-tabs" role="tablist">
@@ -256,36 +278,45 @@ function Systems() {
           ))}
         </div>
 
-        <div className="systems-board">
-          <div className="systems-info">
+        <div className="sy-board">
+          <div className="sy-stage">
+            <InView className="sy-canvas" fallback={<div className="pt-canvas-ph" />}>
+              <Suspense fallback={<div className="pt-canvas-ph" />}>
+                <SystemScene steps={steps} at={at} />
+              </Suspense>
+            </InView>
+            <div className="sy-now" aria-live="polite">
+              <span className="sy-now-n">{at + 1}/{steps.length}</span>
+              <div><b>{steps[at].who}</b><span>{steps[at].what}</span></div>
+              <button className="b-icon" onClick={() => setPlay(!play)} aria-label={play ? 'Pausar' : 'Reproduzir'}><Icon name={play ? "pause" : "arrow"} size={16} /></button>
+            </div>
+          </div>
+
+          <aside className="sy-side">
             <h3>{sys.name}</h3>
             <p>{sys.pitch}</p>
             {sys.proof && <p className="systems-proof"><Icon name="check" size={16} /> {sys.proof}</p>}
-            <ul className="mod-list">
-              {sys.modules.map((m) => (
-                <li key={m} className={sys.defaults.includes(m) ? 'is-on' : ''}>
-                  <span className="mod-tick" />
-                  {MODULES[m].label}
+            <ol className="sy-steps">
+              {steps.map((s, i) => (
+                <li key={i} className={i === at ? 'is-now' : i < at ? 'is-done' : ''}>
+                  <button onClick={() => { setAt(i); setPlay(false) }}>
+                    <span className="part-no">{i + 1}</span>
+                    <span><b>{s.who}</b> {s.what.charAt(0).toLowerCase() + s.what.slice(1)}</span>
+                  </button>
                 </li>
               ))}
-            </ul>
-            <Link className="btn" to={`/construir?system=${sys.id}`}>Montar este sistema <Icon name="arrow" size={16} /></Link>
-          </div>
-
-          <ol className="flow" aria-label="Como o sistema funciona">
-            {sys.flow.map((f, i) => (
-              <li key={i} className={`flow-step ${i === step ? 'is-now' : ''} ${i < step ? 'is-done' : ''}`}>
-                <span className="flow-who">{f.who}</span>
-                <span className="flow-what">{f.what}</span>
-                <span className="flow-mod part-no">{MODULES[f.module].label}</span>
-              </li>
-            ))}
-          </ol>
+            </ol>
+            <div className="sy-actions">
+              <Link className="btn" to={`/construir?system=${sys.id}`}>Montar este sistema <Icon name="arrow" size={16} /></Link>
+              <Link className="btn is-ghost" to="/construir?start=system">Descrever o meu</Link>
+            </div>
+          </aside>
         </div>
       </div>
     </section>
   )
 }
+
 
 function Projects() {
   return (
@@ -295,21 +326,7 @@ function Projects() {
           <h2>Montados e no ar.</h2>
           <p>Sites e sistemas que a Prime Page entregou para empresas reais.</p>
         </header>
-        <div className="projects-grid">
-          {PROJECTS.map((p, i) => (
-            <a key={p.name} href={p.url} target="_blank" rel="noopener" className={`project ${i < 3 ? 'is-wide' : ''}`} data-reveal>
-              <div className="project-shot">
-                <img src={p.image} alt={`Tela do projeto ${p.name}`} loading="lazy" />
-              </div>
-              <div className="project-meta">
-                <span className={`project-kind ${p.kind === 'Sistema' ? 'is-system' : ''}`}>{p.kind}</span>
-                <h3>{p.name}</h3>
-                <p>{p.text}</p>
-                <span className="project-link">{p.host} <Icon name="arrow" size={14} /></span>
-              </div>
-            </a>
-          ))}
-        </div>
+        <ProjectsCarousel />
       </div>
     </section>
   )

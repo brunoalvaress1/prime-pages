@@ -63,7 +63,7 @@ const tpl = (id, name, segment, theme, cover, tags, blocks) => ({ id, name, segm
 
 export const TEMPLATES = [
   tpl('restaurante', 'Restaurante', 'Gastronomia', 'bistro', img(P.dining, 900), ['Reserva', 'Cardápio', 'Galeria mosaico'], () => [
-    makeBlock('hero', { layout: 'full', kicker: 'Cozinha autoral · Leme', title: 'Fogo, tempo e ingrediente bom.', subtitle: 'Jantar à la carte de terça a sábado. Almoço executivo de segunda a sexta.', cta: 'Reservar mesa', cta2: 'Ver cardápio', image: img(P.dining), media: { image: { overlay: 35 } }, style: { pad: 'l' } }),
+    makeBlock('hero', { layout: 'full', kicker: 'Cozinha autoral · Leme', title: 'Fogo, tempo e ingrediente bom.', subtitle: 'Jantar à la carte de terça a sábado. Almoço executivo de segunda a sexta.', cta: 'Reservar mesa', cta2: 'Ver cardápio', float3d: { shape: 'wineglass', material: 'glass', color: '#f4d9a8', pos: 'right' }, image: img(P.dining), media: { image: { overlay: 35 } }, style: { pad: 'l' } }),
     makeBlock('marquee', { text: 'Reservas pelo WhatsApp · Carta de vinhos · Estacionamento conveniado · Eventos privados' }),
     makeBlock('about', { layout: 'reverse', title: 'Uma casa para comer devagar', text: 'Cozinha aberta, brasa de lenha e um cardápio que muda com a estação. Cada prato sai do jeito que a gente come em casa, só que com mais cuidado.', image: img(P.restaurant, 900), image2: img(P.food, 600), media: { image: shape('arch'), image2: shape('circle', { border: 6, borderColor: '#14100d' }) } }),
     makeBlock('menu', { title: 'Da brasa', items: [
@@ -80,7 +80,7 @@ export const TEMPLATES = [
   ]),
 
   tpl('clinica', 'Clínica odontológica', 'Saúde', 'saude', img(P.dental, 900), ['Agendamento', 'Equipe', 'Passo a passo'], () => [
-    makeBlock('hero', { layout: 'split', kicker: 'Odontologia completa', title: 'Sorria sem medo de dentista.', subtitle: 'Atendimento sem pressa, anestesia indolor e plano de tratamento explicado antes de começar.', cta: 'Agendar avaliação', cta2: 'Ver tratamentos', image: img(P.dental, 1000), media: { image: shape('blob2', { shadow: 30 }) }, style: { pad: 'l' } }),
+    makeBlock('hero', { layout: 'split', kicker: 'Odontologia completa', title: 'Sorria sem medo de dentista.', subtitle: 'Atendimento sem pressa, anestesia indolor e plano de tratamento explicado antes de começar.', cta: 'Agendar avaliação', cta2: 'Ver tratamentos', float3d: { shape: 'capsule', material: 'glass', color: '#5fd3c4', pos: 'left' }, image: img(P.dental, 1000), media: { image: shape('blob2', { shadow: 30 }) }, style: { pad: 'l' } }),
     makeBlock('stats', { items: [{ title: '00+', text: 'anos de clínica' }, { title: '0.000', text: 'pacientes atendidos' }, { title: '4,9', text: 'nota no Google' }] }),
     makeBlock('services', { layout: 'list', title: 'Tratamentos', items: [
       { title: 'Implantes', text: 'Planejamento digital e prótese no mesmo dia, quando indicado.' },
@@ -97,7 +97,7 @@ export const TEMPLATES = [
   ]),
 
   tpl('salao', 'Salão & estética', 'Beleza', 'beleza', img(P.makeup, 900), ['Retrato P&B', 'Arcos', 'Agenda'], () => [
-    makeBlock('hero', { layout: 'editorial', kicker: 'Atelier de beleza', title: 'Beleza com hora marcada', subtitle: 'Cabelo, maquiagem e estética em um espaço feito para você desacelerar.', cta: 'Agendar horário', image: img(P.makeup, 1400), media: { image: shape('half-top', { grayscale: 100, contrast: 108, ratio: '21/9', y: 30 }) }, style: { align: 'center', pad: 'l' } }),
+    makeBlock('hero', { layout: 'editorial', kicker: 'Atelier de beleza', title: 'Beleza com hora marcada', subtitle: 'Cabelo, maquiagem e estética em um espaço feito para você desacelerar.', cta: 'Agendar horário', float3d: { shape: 'bottle', material: 'glass', color: '#e9cfc4', pos: 'corner' }, image: img(P.makeup, 1400), media: { image: shape('half-top', { grayscale: 100, contrast: 108, ratio: '21/9', y: 30 }) }, style: { align: 'center', pad: 'l' } }),
     makeBlock('marquee', { text: 'Coloração · Corte · Escova · Maquiagem · Design de sobrancelhas · Manicure' }),
     makeBlock('services', { layout: 'images', title: 'Serviços', items: [
       { title: 'Cabelo', text: 'Corte, coloração e tratamentos.', image: img(P.salonWash, 700) },
@@ -112,7 +112,7 @@ export const TEMPLATES = [
   ]),
 
   tpl('loja', 'Loja de moda', 'Varejo', 'moda', img(P.shopping, 900), ['Vitrine', 'Pagamento', 'Área do cliente'], () => [
-    makeBlock('hero', { layout: 'full', kicker: 'Nova coleção', title: 'Inverno 26', subtitle: 'Peças atemporais para usar a temporada inteira.', cta: 'Comprar agora', cta2: 'Ver lookbook', image: img(P.shopping), media: { image: { overlay: 25, y: 30 } }, style: { pad: 'l' } }),
+    makeBlock('hero', { layout: 'full', kicker: 'Nova coleção', title: 'Inverno 26', subtitle: 'Peças atemporais para usar a temporada inteira.', cta: 'Comprar agora', cta2: 'Ver lookbook', float3d: { shape: 'bag', material: 'glossy', color: '#efe9df', pos: 'right' }, image: img(P.shopping), media: { image: { overlay: 25, y: 30 } }, style: { pad: 'l' } }),
     makeBlock('marquee', { text: 'Frete grátis acima de R$ 299 · Troca em até 30 dias · Parcele em até 6x · Retire na loja' }),
     makeBlock('products', { title: 'Mais vendidos', items: [
       { title: 'Casaco lã batida', price: 'R$ 489,90', image: img(P.shopping, 700) },
@@ -127,7 +127,7 @@ export const TEMPLATES = [
   ]),
 
   tpl('oficina', 'Oficina mecânica', 'Automotivo', 'oficina', img(P.engine, 900), ['Orçamento', 'Números', 'Passo a passo'], () => [
-    makeBlock('hero', { layout: 'split', kicker: 'Mecânica · Elétrica · Injeção', title: 'Seu carro em boas mãos', subtitle: 'Diagnóstico por scanner, orçamento antes de mexer e fotos do serviço pelo WhatsApp.', cta: 'Pedir orçamento', image: img(P.engine, 1000), media: { image: shape('slant', { contrast: 112 }) }, style: { pad: 'l' } }),
+    makeBlock('hero', { layout: 'split', kicker: 'Mecânica · Elétrica · Injeção', title: 'Seu carro em boas mãos', subtitle: 'Diagnóstico por scanner, orçamento antes de mexer e fotos do serviço pelo WhatsApp.', cta: 'Pedir orçamento', float3d: { shape: 'gear', material: 'metal', color: '#f2b705', pos: 'left' }, image: img(P.engine, 1000), media: { image: shape('slant', { contrast: 112 }) }, style: { pad: 'l' } }),
     makeBlock('stats', { items: [{ title: '00', text: 'anos de oficina' }, { title: '0.000+', text: 'carros atendidos' }, { title: '90 dias', text: 'de garantia' }], style: { bg: 'accent' } }),
     makeBlock('services', { layout: 'list', title: 'Serviços', items: [{ title: 'Revisão completa', text: 'Checklist de 40 itens.' }, { title: 'Freios e suspensão', text: 'Peças com nota e garantia.' }, { title: 'Injeção eletrônica', text: 'Diagnóstico por scanner.' }, { title: 'Ar-condicionado', text: 'Higienização e recarga.' }] }),
     makeBlock('steps', { title: 'Como funciona', items: [{ title: 'Traga o carro', text: 'Ou agende a retirada.' }, { title: 'Receba o orçamento', text: 'Com fotos, pelo WhatsApp.' }, { title: 'Aprovou, fizemos', text: 'Entrega no prazo combinado.' }], style: { bg: 'surface' } }),
@@ -138,7 +138,7 @@ export const TEMPLATES = [
   ]),
 
   tpl('advocacia', 'Advocacia', 'Serviços profissionais', 'juridico', img(P.handshake, 900), ['Áreas', 'Equipe', 'Artigos'], () => [
-    makeBlock('hero', { layout: 'split', kicker: 'Advocacia · Leme e região', title: 'Orientação jurídica clara, do primeiro contato à solução.', subtitle: 'Direito civil, trabalhista, família e empresarial.', cta: 'Agendar conversa', image: img(P.handshake, 1000), media: { image: shape('arch', { ratio: '4/5', grayscale: 40 }) }, style: { pad: 'l' } }),
+    makeBlock('hero', { layout: 'split', kicker: 'Advocacia · Leme e região', title: 'Orientação jurídica clara, do primeiro contato à solução.', subtitle: 'Direito civil, trabalhista, família e empresarial.', cta: 'Agendar conversa', float3d: { shape: 'gem', material: 'metal', color: '#b08a3e', pos: 'left' }, image: img(P.handshake, 1000), media: { image: shape('arch', { ratio: '4/5', grayscale: 40 }) }, style: { pad: 'l' } }),
     makeBlock('services', { layout: 'list', title: 'Áreas de atuação', items: [{ title: 'Família e sucessões', text: 'Divórcio, guarda, inventário.' }, { title: 'Trabalhista', text: 'Para empresas e trabalhadores.' }, { title: 'Civil', text: 'Contratos, indenizações, imóveis.' }, { title: 'Empresarial', text: 'Abertura, sociedade e consultoria.' }] }),
     makeBlock('stats', { items: [{ title: '00', text: 'anos de atuação' }, { title: '000+', text: 'casos acompanhados' }, { title: 'OAB/SP', text: 'inscrição 000.000' }], style: { bg: 'dark' } }),
     makeBlock('team', { title: 'Advogados', items: [{ title: 'Dr. Nome', text: 'Sócio · OAB/SP 000.000', image: img(P.portrait, 600) }, { title: 'Dra. Nome', text: 'Sócia · OAB/SP 000.000', image: '' }], media: { 'items.0.image': shape('rect', { ratio: '4/5', grayscale: 100 }), 'items.1.image': shape('rect', { ratio: '4/5', grayscale: 100 }) } }),
@@ -161,7 +161,7 @@ export const TEMPLATES = [
   ]),
 
   tpl('academia', 'Academia', 'Fitness', 'fitness', img(P.deadlift, 900), ['Planos', 'Área do aluno', 'Mosaico'], () => [
-    makeBlock('hero', { layout: 'full', kicker: 'Musculação · Funcional · Lutas', title: 'Treino sério. Resultado de verdade.', subtitle: 'Acompanhamento de professor em todos os horários.', cta: 'Aula experimental grátis', image: img(P.deadlift), media: { image: { overlay: 45, contrast: 115 } }, style: { pad: 'l' } }),
+    makeBlock('hero', { layout: 'full', kicker: 'Musculação · Funcional · Lutas', title: 'Treino sério. Resultado de verdade.', subtitle: 'Acompanhamento de professor em todos os horários.', cta: 'Aula experimental grátis', float3d: { shape: 'dumbbell', material: 'metal', color: '#c6f432', pos: 'right' }, image: img(P.deadlift), media: { image: { overlay: 45, contrast: 115 } }, style: { pad: 'l' } }),
     makeBlock('marquee', { text: 'Aberto das 5h às 23h · Avaliação física inclusa · App de treino · Estacionamento' }),
     makeBlock('stats', { items: [{ title: '000m²', text: 'de área de treino' }, { title: '00', text: 'professores' }, { title: '5h–23h', text: 'todos os dias' }] }),
     makeBlock('pricing', { title: 'Planos', items: [{ title: 'Mensal', price: 'R$ 000', text: 'Musculação livre.' }, { title: 'Trimestral', price: 'R$ 000', text: 'Musculação + funcional.' }, { title: 'Anual', price: 'R$ 000', text: 'Acesso total + avaliação mensal.' }] }),
@@ -172,7 +172,7 @@ export const TEMPLATES = [
   ]),
 
   tpl('imobiliaria', 'Arquitetura & imóveis', 'Imobiliário', 'arquitetura', img(P.house, 900), ['Mosaico', 'Números', 'Contato'], () => [
-    makeBlock('hero', { layout: 'full', kicker: 'Projetos residenciais', title: 'Casas que envelhecem bem.', subtitle: 'Arquitetura, interiores e acompanhamento de obra.', cta: 'Ver projetos', cta2: 'Falar com um arquiteto', image: img(P.house), media: { image: { overlay: 20 } }, style: { pad: 'l' } }),
+    makeBlock('hero', { layout: 'full', kicker: 'Projetos residenciais', title: 'Casas que envelhecem bem.', subtitle: 'Arquitetura, interiores e acompanhamento de obra.', cta: 'Ver projetos', cta2: 'Falar com um arquiteto', float3d: { shape: 'house', material: 'matte', color: '#efede8', pos: 'right' }, image: img(P.house), media: { image: { overlay: 20 } }, style: { pad: 'l' } }),
     makeBlock('about', { layout: 'split', title: 'Projeto do terreno à chave', text: 'Estudamos o terreno, o sol e a rotina da família antes do primeiro traço.', image: img(P.interior, 900), image2: img(P.interior2, 600), media: { image: shape('rect', { ratio: '4/5' }), image2: shape('rect', { ratio: '1/1', shadow: 30 }) } }),
     makeBlock('stats', { items: [{ title: '00', text: 'projetos entregues' }, { title: '00.000m²', text: 'construídos' }, { title: '00', text: 'anos de escritório' }], style: { bg: 'surface' } }),
     makeBlock('gallery', { layout: 'bento', title: 'Projetos', images: [img(P.house, 900), img(P.interior, 600), img(P.interior2, 600), img(P.office2, 600), img(P.house, 1200)], media: { 'images.4': { zoom: 240, x: 30, y: 40 } } }),

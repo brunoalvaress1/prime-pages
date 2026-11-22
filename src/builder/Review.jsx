@@ -1,14 +1,18 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Icon from '../components/Icon.jsx'
+import AuthForm from '../components/AuthForm.jsx'
+import { useAuth } from '../lib/useAuth.jsx'
+import { projects, quotes } from '../lib/backend.js'
 import SiteRenderer from './SiteRenderer.jsx'
 import { BLOCKS } from '../data/blocks.js'
 import { MODULES } from '../data/systems.js'
 import { FLAGS, computeScope, buildWhatsAppMessage, whatsappUrl, projectCode, originLabel } from '../lib/scope.js'
-import { saveQuote, supabase } from '../lib/supabase.js'
 
-const FLAG_ICON = { payments: 'pay', database: 'db', auth: 'lock', admin: 'panel', notifications: 'bell', integrations: 'plug', reports: 'chart', '3d': 'cube', mobile: 'phone' }
+const FLAG_ICON = { payments: 'pay', database: 'db', auth: 'lock', admin: 'panel', notifications: 'bell', integrations: 'plug', reports: 'chart', '3d': 'cube', mobile: 'phone', storage: 'image' }
 
 export default function Review({ state, dispatch, onBack, onRestart }) {
+  const { user } = useAuth()
   const scope = useMemo(() => computeScope(state), [state])
   const [contact, setContact] = useState({ name: '', business: '', phone: '', notes: state.kind === 'system' ? state.system.notes : '' })
   const [sending, setSending] = useState(false)
@@ -16,28 +20,37 @@ export default function Review({ state, dispatch, onBack, onRestart }) {
   const [error, setError] = useState('')
   const ex = state.extras
   const setEx = (patch) => dispatch({ type: 'extras', patch })
-  const message = buildWhatsAppMessage(state, contact)
+  const message = buildWhatsAppMessage(state, { ...contact, email: user?.email })
+
+  // Ao entrar/criar conta, preenche nome e telefone.
+  useEffect(() => {
+    if (user) setContact((c) => ({ ...c, name: c.name || user.name || '', phone: c.phone || user.phone || '' }))
+  }, [user])
 
   const send = async (e) => {
     e.preventDefault()
+    if (!user) return setError('Crie sua conta (ou entre) para enviar o pedido.')
     if (!contact.name.trim()) return setError('Diga seu nome para a gente saber com quem fala.')
     setError('')
     setSending(true)
     // A janela abre antes do await para o navegador não bloquear o pop-up.
     const win = window.open('', '_blank')
-    let project = state
-    if (supabase) {
-      const id = await saveQuote(state, contact, scope, message)
-      if (id) {
-        project = { ...state, remoteId: id }
-        dispatch({ type: 'set', patch: { remoteId: id } })
-      }
+    try {
+      const projectId = await projects.save(state, user)
+      const project = { ...state, projectId, remoteId: projectId }
+      dispatch({ type: 'set', patch: { projectId, remoteId: projectId } })
+      const msg = buildWhatsAppMessage(project, { ...contact, email: user.email })
+      await quotes.create({ user, projectId, project, contact, scope, message: msg })
+      const url = whatsappUrl(msg)
+      if (win) win.location.href = url
+      else window.location.href = url
+      setSent(true)
+    } catch (err) {
+      win?.close()
+      setError(err.message)
+    } finally {
+      setSending(false)
     }
-    const url = whatsappUrl(buildWhatsAppMessage(project, contact))
-    if (win) win.location.href = url
-    else window.location.href = url
-    setSending(false)
-    setSent(true)
   }
 
   return (
@@ -109,7 +122,15 @@ export default function Review({ state, dispatch, onBack, onRestart }) {
             </div>
           </div>
 
-          <form className="review-form" onSubmit={send}>
+          {!user && (
+            <div className="review-auth">
+              <h3>Crie sua conta para enviar</h3>
+              <p>Só e-mail, senha e telefone. Seu projeto fica salvo e você acompanha o orçamento pela sua conta.</p>
+              <AuthForm initial="signup" compact />
+            </div>
+          )}
+          {user && <form className="review-form" onSubmit={send}>
+            <p className="review-logged"><Icon name="check" size={16} /> Conectado como <b>{user.email}</b> · <Link to="/conta">minha conta</Link></p>
             <h3>Seus dados</h3>
             <div className="r-row">
               <label><span>Seu nome *</span><input className="field" value={contact.name} onChange={(e) => setContact({ ...contact, name: e.target.value })} autoComplete="name" /></label>
@@ -123,11 +144,11 @@ export default function Review({ state, dispatch, onBack, onRestart }) {
             </button>
             {sent && (
               <p className="review-sent">
-                <Icon name="check" size={16} /> Pedido aberto no WhatsApp. É só apertar enviar por lá. Seu modelo fica salvo neste navegador.{' '}
-                <button type="button" onClick={onRestart}>Montar outro projeto</button>
+                <Icon name="check" size={16} /> Pedido aberto no WhatsApp. É só apertar enviar por lá. O projeto ficou salvo na sua conta.{' '}
+                <Link to="/conta">Ver minha conta</Link> · <button type="button" onClick={onRestart}>Montar outro projeto</button>
               </p>
             )}
-          </form>
+          </form>}
         </section>
 
         <aside className="review-side">
@@ -135,7 +156,7 @@ export default function Review({ state, dispatch, onBack, onRestart }) {
             <span className="b-label">Prévia do modelo</span>
             {state.kind === 'site' ? (
               <div className="review-thumb">
-                <div className="review-thumb-inner"><SiteRenderer project={state} device="desktop" /></div>
+                <div className="review-thumb-inner"><SiteRenderer project={state} device="desktop" no3d /></div>
               </div>
             ) : (
               <div className="review-sysmods">{state.system.modules.map((m) => <span key={m}>{MODULES[m].label}</span>)}</div>

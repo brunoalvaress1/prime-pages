@@ -15,6 +15,7 @@ export const MODULES = {
   frota: { label: 'Veículos e manutenções', needs: ['database'], hint: 'Quilometragem, revisões e custos.' },
   pedidos: { label: 'Pedidos / delivery', needs: ['database', 'notifications'], hint: 'Recebimento e status do pedido.' },
   app: { label: 'Versão aplicativo (celular)', needs: ['mobile'], hint: 'Instalável no celular.' },
+  midia: { label: 'Fotos, vídeos e documentos', needs: ['storage', 'database'], hint: 'Anexos em cadastros e atendimentos.' },
 }
 
 export const SYSTEMS = [

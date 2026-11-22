@@ -30,3 +30,9 @@ Copie `.env.example` para `.env` (e configure as mesmas no Vercel):
 ## Deploy
 
 Vercel, framework Vite (build `npm run build`, saída `dist`). `vercel.json` redireciona as rotas para o app.
+
+## Contas, admin e banco
+
+- `/entrar`, `/conta`: cadastro (e-mail, senha, telefone), login, esqueci a senha (código por e-mail), editar dados e projetos.
+- `/admin`: painel da equipe (primepagesleme@gmail.com). Vê pedidos, muda status, abre o modelo do cliente no construtor e exporta JSON/HTML.
+- Sem as chaves do Supabase o site roda em **modo demonstração** (dados só no navegador). Com as chaves, rode `supabase/schema.sql`, crie o usuário admin em Authentication > Users e coloque `{{ .Token }}` no template de e-mail "Reset Password".

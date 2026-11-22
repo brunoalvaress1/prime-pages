@@ -6,7 +6,7 @@ import { BLOCKS, BLOCK_ORDER, SHAPES, MATERIALS } from '../data/blocks.js'
 import { THEMES, FONTS } from '../data/templates.js'
 import { FLAGS, computeScope } from '../lib/scope.js'
 
-const FLAG_ICON = { payments: 'pay', database: 'db', auth: 'lock', admin: 'panel', notifications: 'bell', integrations: 'plug', reports: 'chart', '3d': 'cube', mobile: 'phone' }
+const FLAG_ICON = { payments: 'pay', database: 'db', auth: 'lock', admin: 'panel', notifications: 'bell', integrations: 'plug', reports: 'chart', '3d': 'cube', mobile: 'phone', storage: 'image' }
 
 function Parts({ state, dispatch }) {
   const groups = { A: 'Estrutura', B: 'Conteúdo e vendas', C: 'Confiança', D: 'Extras e contato' }
@@ -87,8 +87,7 @@ function Seg({ value, options, onChange, wrap }) {
   )
 }
 
-function ThreeControls({ block, set, glbInput }) {
-  const p = block.props
+function ThreeControls({ p, set, glbInput }) {
   return (
     <>
       <div className="b-field">
@@ -161,7 +160,21 @@ function PieceTab({ state, dispatch }) {
       {block.type === 'about' && (
         <label className="r-check is-sm"><input type="checkbox" checked={!!(block.props.image2 || block.props.showImage2)} onChange={(e) => set(e.target.checked ? { showImage2: true } : { showImage2: false, image2: '' })} /> Segunda foto sobreposta</label>
       )}
-      {((block.type === 'hero' && block.props.layout === '3d') || block.type === 'model3d') && <ThreeControls block={block} set={set} glbInput={glbInput} />}
+      {((block.type === 'hero' && block.props.layout === '3d') || block.type === 'model3d') && <ThreeControls p={block.props} set={set} glbInput={glbInput} />}
+      {block.type === 'hero' && block.props.layout !== '3d' && (
+        <>
+          <label className="r-check is-sm"><input type="checkbox" checked={!!block.props.float3d} onChange={(e) => set({ float3d: e.target.checked ? { shape: 'gem', material: 'glass', color: '', pos: 'right' } : null })} /> Objeto 3D flutuando na capa</label>
+          {block.props.float3d && (
+            <>
+              <div className="b-field">
+                <span className="b-label">Posição do objeto</span>
+                <Seg value={block.props.float3d.pos || 'right'} options={[['right', 'Direita'], ['left', 'Centro'], ['corner', 'Canto']]} onChange={(pos) => set({ float3d: { ...block.props.float3d, pos } })} />
+              </div>
+              <ThreeControls p={block.props.float3d} set={(patch) => set({ float3d: { ...block.props.float3d, ...patch } })} glbInput={glbInput} />
+            </>
+          )}
+        </>
+      )}
 
       {block.type === 'map' && (
         <label className="b-field">
@@ -237,14 +250,25 @@ function ThemeTab({ state, dispatch }) {
 function Inspector({ state, dispatch }) {
   const [tab, setTab] = useState('piece')
   const imgBlock = state.selImg && state.blocks.find((b) => b.id === state.selImg.blockId)
+  const ref = useRef(null)
+  const [drawer, setDrawer] = useState(false)
+  const selKey = state.selImg ? state.selImg.blockId + state.selImg.path : state.selected
 
   useEffect(() => {
     if (state.selImg) setTab('image')
     else setTab((t) => (t === 'image' ? 'piece' : t))
   }, [state.selImg])
 
+  // O painel acompanha a seleção: volta ao topo e, em telas menores, abre como gaveta.
+  useEffect(() => {
+    if (!selKey) return
+    ref.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    setDrawer(true)
+  }, [selKey])
+
   return (
-    <aside className="b-inspector">
+    <aside className={`b-inspector ${drawer ? 'is-open' : ''}`} ref={ref}>
+      <button className="b-drawer-close" onClick={() => setDrawer(false)} aria-label="Fechar painel"><Icon name="x" size={18} /></button>
       <div className="b-tabs" role="tablist">
         <button role="tab" aria-selected={tab === 'piece'} className={tab === 'piece' ? 'is-on' : ''} onClick={() => setTab('piece')}>Seção</button>
         <button role="tab" aria-selected={tab === 'image'} className={tab === 'image' ? 'is-on' : ''} onClick={() => setTab('image')}>Foto</button>

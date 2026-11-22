@@ -1,4 +1,5 @@
 import { Suspense, useMemo, useRef } from 'react'
+import * as THREE from 'three'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { OrbitControls, Environment, Float, useGLTF, Center, MeshDistortMaterial, RoundedBox, Lightformer, MeshTransmissionMaterial } from '@react-three/drei'
 
@@ -41,6 +42,36 @@ function Cluster({ material, color }) {
   ))
 }
 
+// Objetos temáticos feitos com geometria (sem arquivos externos)
+function Gear({ m }) {
+  const geo = useMemo(() => {
+    const s = new THREE.Shape()
+    const teeth = 12, r1 = 1.0, r2 = 1.25
+    for (let i = 0; i < teeth * 2; i++) {
+      const a0 = (i / (teeth * 2)) * Math.PI * 2
+      const a1 = ((i + 1) / (teeth * 2)) * Math.PI * 2
+      const r = i % 2 ? r1 : r2
+      if (i === 0) s.moveTo(Math.cos(a0) * r, Math.sin(a0) * r)
+      s.lineTo(Math.cos(a0) * r, Math.sin(a0) * r)
+      s.lineTo(Math.cos(a1) * r, Math.sin(a1) * r)
+    }
+    const hole = new THREE.Path()
+    hole.absarc(0, 0, 0.42, 0, Math.PI * 2, true)
+    s.holes.push(hole)
+    const g = new THREE.ExtrudeGeometry(s, { depth: 0.35, bevelEnabled: true, bevelSize: 0.04, bevelThickness: 0.04, bevelSegments: 3 })
+    g.center()
+    return g
+  }, [])
+  return <mesh geometry={geo} rotation={[0.4, 0.3, 0]}>{m}</mesh>
+}
+
+function Lathe({ points, m, y = 0 }) {
+  const geo = useMemo(() => new THREE.LatheGeometry(points.map(([x, yy]) => new THREE.Vector2(x, yy)), 64), [points])
+  return <mesh geometry={geo} position={[0, y, 0]}>{m}</mesh>
+}
+const GLASS_PTS = [[0, -1.3], [0.6, -1.3], [0.62, -1.25], [0.08, -1.18], [0.06, -0.2], [0.1, -0.05], [0.55, 0.25], [0.68, 0.8], [0.66, 1.3], [0.62, 1.3], [0.6, 0.82], [0.5, 0.3], [0.05, 0.02], [0, 0.02]]
+const BOTTLE_PTS = [[0, -1.1], [0.75, -1.1], [0.85, -0.9], [0.85, 0.35], [0.6, 0.65], [0.22, 0.75], [0.22, 0.95], [0, 0.95]]
+
 function Shape({ shape, color, material }) {
   const ref = useRef()
   useFrame((_, dt) => {
@@ -67,7 +98,39 @@ function Shape({ shape, color, material }) {
             ))}
           </group>
         )}
-        {shape === 'box' && <RoundedBox args={[1.6, 2.1, 0.32]} radius={0.06}>{m}</RoundedBox>}
+        {shape === 'gear' && <Gear m={m} />}
+        {shape === 'wineglass' && <Lathe points={GLASS_PTS} m={m} />}
+        {shape === 'bottle' && (
+          <group rotation={[0, 0, 0.15]}>
+            <Lathe points={BOTTLE_PTS} m={m} />
+            <mesh position={[0, 1.2, 0]}><cylinderGeometry args={[0.32, 0.32, 0.5, 48]} /><meshStandardMaterial color="#c9a45c" metalness={1} roughness={0.25} /></mesh>
+          </group>
+        )}
+        {shape === 'dumbbell' && (
+          <group rotation={[0.3, 0, 0.5]}>
+            <mesh rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.12, 0.12, 2.2, 32]} /><meshStandardMaterial color="#c8c8c8" metalness={1} roughness={0.2} /></mesh>
+            {[-1, 1].map((s) => (
+              <group key={s}>
+                <mesh position={[s * 0.8, 0, 0]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.55, 0.55, 0.28, 48]} />{m}</mesh>
+                <mesh position={[s * 1.02, 0, 0]} rotation={[0, 0, Math.PI / 2]}><cylinderGeometry args={[0.42, 0.42, 0.18, 48]} />{m}</mesh>
+              </group>
+            ))}
+          </group>
+        )}
+        {shape === 'bag' && (
+          <group rotation={[0.1, -0.4, 0]}>
+            <RoundedBox args={[1.5, 1.7, 0.6]} radius={0.04} position={[0, -0.3, 0]}>{m}</RoundedBox>
+            <mesh position={[0, 0.62, 0]}><torusGeometry args={[0.38, 0.05, 16, 48, Math.PI]} /><meshStandardMaterial color="#1b1b1b" roughness={0.5} /></mesh>
+          </group>
+        )}
+        {shape === 'house' && (
+          <group rotation={[0.15, -0.6, 0]}>
+            <RoundedBox args={[1.6, 1.1, 1.3]} radius={0.03} position={[0, -0.45, 0]}>{m}</RoundedBox>
+            <mesh position={[0, 0.42, 0]} rotation={[0, Math.PI / 4, 0]} scale={[1, 0.62, 1]}><coneGeometry args={[1.3, 1, 4]} /><meshStandardMaterial color="#2b2b2b" roughness={0.6} /></mesh>
+            <mesh position={[0.25, -0.62, 0.66]}><boxGeometry args={[0.36, 0.7, 0.02]} /><meshStandardMaterial color="#2b2b2b" /></mesh>
+          </group>
+        )}
+        {shape === 'box' &&<RoundedBox args={[1.6, 2.1, 0.32]} radius={0.06}>{m}</RoundedBox>}
         {shape === 'torus' && <mesh rotation={[Math.PI / 3, 0, 0]}><torusGeometry args={[1, 0.38, 48, 160]} />{m}</mesh>}
         {shape === 'phone' && (
           <group>

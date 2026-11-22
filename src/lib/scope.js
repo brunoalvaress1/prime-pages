@@ -15,6 +15,7 @@ export const FLAGS = {
   reports: { label: 'Relatórios e painéis', short: 'Relatórios' },
   '3d': { label: 'Elementos 3D', short: '3D' },
   mobile: { label: 'Versão aplicativo', short: 'App' },
+  storage: { label: 'Armazenar fotos, vídeos e arquivos', short: 'Arquivos' },
 }
 
 export function computeScope(project) {
@@ -82,6 +83,7 @@ export function buildWhatsAppMessage(project, contact) {
   L.push(`Código: *${projectCode(project)}*`)
   L.push('')
   L.push(`*Cliente:* ${contact.name || '-'}`)
+  if (contact.email) L.push(`*E-mail:* ${contact.email}`)
   if (contact.business) L.push(`*Negócio:* ${contact.business}`)
   if (contact.phone) L.push(`*WhatsApp:* ${contact.phone}`)
   L.push('')
@@ -98,6 +100,13 @@ export function buildWhatsAppMessage(project, contact) {
     L.push(`*Tipo:* Sistema — ${sys?.name || project.name}`)
     L.push(`*Módulos (${scope.modules}):* ${project.system.modules.map((m) => MODULES[m].label).join(', ')}`)
     L.push(`*Usuários estimados:* ${project.system.users || '-'}`)
+    const ft = project.system.features || {}
+    const media = [ft.photos && 'fotos', ft.videos && 'vídeos', ft.docs && 'documentos'].filter(Boolean)
+    if (media.length) L.push(`*Arquivos:* ${media.join(', ')}`)
+    if (ft.multi) L.push(`*Mais de uma unidade:* sim`)
+    if (ft.import && ft.import !== 'no') L.push(`*Importar dados:* ${ft.import === 'sheets' ? 'de planilhas' : 'de outro sistema'}`)
+    if (project.system.brand?.logo) L.push(`*Marca:* enviou logo · cor ${project.system.brand.color}`)
+    if (project.system.prompt) L.push(`*Descrição do cliente:* "${project.system.prompt.slice(0, 300)}"`)
   }
 
   L.push('')
@@ -111,6 +120,7 @@ export function buildWhatsAppMessage(project, contact) {
   L.push(`• Relatórios: ${yes('reports')}`)
   L.push(`• 3D: ${yes('3d')}`)
   L.push(`• App celular: ${yes('mobile')}`)
+  L.push(`• Armazenar arquivos: ${yes('storage')}`)
   L.push(`• Complexidade estimada: *${scope.complexity.level}*`)
 
   const ex = project.extras || {}

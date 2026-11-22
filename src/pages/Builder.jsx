@@ -9,6 +9,9 @@ import { analyzeUrl, generateFromPrompt } from '../lib/generator.js'
 import BuildSite from '../builder/BuildSite.jsx'
 import BuildSystem from '../builder/BuildSystem.jsx'
 import Review from '../builder/Review.jsx'
+import SitePreview from '../builder/SitePreview.jsx'
+import { useAuth } from '../lib/useAuth.jsx'
+import { projects } from '../lib/backend.js'
 import '../styles/builder.css'
 
 const STEPS = [
@@ -146,9 +149,18 @@ function Start({ state, dispatch, initialTab, autoRun }) {
           {tab === 'system' && (
             <div>
               <h2>Que sistema a sua empresa precisa?</h2>
-              <p className="start-sub">Você escolhe os módulos e vê como ele funcionaria no dia a dia.</p>
+              <p className="start-sub">Descreva com suas palavras e a gente monta junto com você, ou parta de um modelo.</p>
+              <button className="sys-ai" onClick={() => dispatch({ type: 'start-interview' })}>
+                <span className="ai-avatar is-lg"><Icon name="spark" size={22} /></span>
+                <span>
+                  <b>Descrever meu sistema</b>
+                  <small>Você conta o que precisa, a IA analisa, faz perguntas sobre o que faltar e monta um sistema sob medida com telas, fluxo e a sua marca.</small>
+                </span>
+                <em>Recomendado</em>
+              </button>
+              <span className="b-label sys-or">Ou comece por um modelo pronto</span>
               <div className="sys-grid">
-                {SYSTEMS.map((s) => (
+                {SYSTEMS.filter((s) => s.id !== 'sob-medida').map((s) => (
                   <button key={s.id} className="sys" onClick={() => dispatch({ type: 'load-system', id: s.id })}>
                     <b>{s.name}</b>
                     <span>{s.pitch}</span>
@@ -186,10 +198,20 @@ export default function Builder() {
   })
   const initialTab = params.get('start') || (autoRun?.prompt ? 'prompt' : 'url')
 
+  const { user } = useAuth()
+  const [saveState, setSaveState] = useState('')
+  const [preview, setPreview] = useState(false)
+
   useEffect(() => {
     document.title = 'Construa o seu site | Prime Page'
     const sys = params.get('system')
-    if (sys && SYSTEMS.some((s) => s.id === sys)) dispatch({ type: 'load-system', id: sys })
+    const pid = params.get('projeto')
+    if (pid) {
+      projects.get(pid).then((row) => {
+        if (row?.data) dispatch({ type: 'set', patch: { ...row.data, projectId: row.id, remoteId: row.id, step: 'build', selected: null, selImg: null } })
+        else alert('Projeto não encontrado ou sem permissão para abrir.')
+      })
+    } else if (sys && SYSTEMS.some((s) => s.id === sys)) dispatch({ type: 'load-system', id: sys })
     else if (params.get('url') || params.get('prompt') || params.get('start')) dispatch({ type: 'set', patch: { step: 'start' } })
     if ([...params.keys()].length) setParams({}, { replace: true })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -219,9 +241,35 @@ export default function Builder() {
           {hasProject && state.step !== 'start' && (
             <input className="b-name" value={state.name} onChange={(e) => dispatch({ type: 'set', patch: { name: e.target.value } })} aria-label="Nome do projeto" />
           )}
+          {state.step === 'build' && state.kind === 'site' && (
+            <button className="btn is-ghost is-sm" onClick={() => setPreview(true)}><Icon name="eye" size={14} /> Testar site</button>
+          )}
+          {user && hasProject && state.step !== 'start' && (
+            <button
+              className="btn is-ghost is-sm"
+              disabled={saveState === 'saving'}
+              onClick={async () => {
+                setSaveState('saving')
+                try {
+                  const id = await projects.save(state, user)
+                  dispatch({ type: 'set', patch: { projectId: id, remoteId: id } })
+                  setSaveState('saved')
+                  setTimeout(() => setSaveState(''), 2000)
+                } catch (e) {
+                  alert(e.message)
+                  setSaveState('')
+                }
+              }}
+            >
+              <Icon name={saveState === 'saved' ? 'check' : 'upload'} size={14} /> {saveState === 'saving' ? 'Salvando…' : saveState === 'saved' ? 'Salvo' : 'Salvar'}
+            </button>
+          )}
           {state.step === 'build' && (
             <button className="btn is-sm" onClick={() => go('review')}>Pedir orçamento <Icon name="arrow" size={14} /></button>
           )}
+          <Link className="b-user" to={user ? (user.isAdmin ? '/admin' : '/conta') : '/entrar?next=/construir'} title={user ? user.email : 'Entrar'}>
+            {user ? (user.name || user.email).slice(0, 1).toUpperCase() : <Icon name="lock" size={14} />}
+          </Link>
         </div>
       </header>
 
@@ -229,6 +277,7 @@ export default function Builder() {
       {state.step === 'build' && state.kind === 'site' && <BuildSite state={state} dispatch={dispatch} />}
       {state.step === 'build' && state.kind === 'system' && <BuildSystem state={state} dispatch={dispatch} onNext={() => go('review')} />}
       {state.step === 'review' && <Review state={state} dispatch={dispatch} onBack={() => go('build')} onRestart={() => { dispatch({ type: 'reset' }) }} />}
+      {preview && <SitePreview project={state} onClose={() => setPreview(false)} />}
     </div>
   )
 }
