@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { RoundedBox, Html, Environment, Lightformer, Line } from '@react-three/drei'
 import * as THREE from 'three'
+import { DPR, GL, AutoDpr, useFrameloop } from './perf.jsx'
 
 const MOLD = '#1f6fff'
 const CALL = '#ffb020'
@@ -19,7 +20,7 @@ function Node({ pos, label, who, active, done, index }) {
     <group position={[pos[0], 0, pos[2]]}>
       <group ref={ref}>
         <RoundedBox args={[1.1, 0.36, 0.8]} radius={0.06} smoothness={3}>
-          <meshPhysicalMaterial ref={mat} color={active ? MOLD : done ? '#2d5bd1' : '#2a3a5c'} emissive={MOLD} emissiveIntensity={0} roughness={0.3} clearcoat={0.8} />
+          <meshStandardMaterial ref={mat} color={active ? MOLD : done ? '#2d5bd1' : '#2a3a5c'} emissive={MOLD} emissiveIntensity={0} roughness={0.3} />
         </RoundedBox>
         <mesh position={[0, 0.19, 0]}><boxGeometry args={[0.7, 0.02, 0.45]} /><meshStandardMaterial color={active ? '#bcd3ff' : '#3c4f78'} /></mesh>
         <Html position={[0, active ? 0.7 : 0.55, 0]} center zIndexRange={[6, 0]}>
@@ -73,12 +74,14 @@ export default function SystemScene({ steps, at }) {
     return steps.map((_, i) => [n === 1 ? 0 : -w / 2 + (w / (n - 1)) * i, 0, i % 2 ? 0.9 : -0.6])
   }, [steps])
   const prev = (at - 1 + steps.length) % steps.length
+  const frameloop = useFrameloop()
 
   return (
-    <Canvas dpr={[1, 1.75]} camera={{ position: [0, 5.6, 10.2], fov: 38 }} gl={{ antialias: true, alpha: true }} onCreated={({ camera }) => camera.lookAt(0, 0.2, 0)}>
+    <Canvas dpr={DPR} frameloop={frameloop} camera={{ position: [0, 5.6, 10.2], fov: 38 }} gl={GL} onCreated={({ camera }) => camera.lookAt(0, 0.2, 0)}>
+      <AutoDpr />
       <ambientLight intensity={0.5} />
       <directionalLight position={[-4, 7, 5]} intensity={2} />
-      <Environment resolution={256}>
+      <Environment resolution={128}>
         <Lightformer intensity={2} position={[0, 5, -4]} scale={[12, 3, 1]} />
         <Lightformer intensity={0.8} color={CALL} position={[6, 1, 2]} rotation-y={-Math.PI / 2} scale={[5, 2, 1]} />
       </Environment>

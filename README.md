@@ -17,7 +17,8 @@ npm run build    # gera dist/
 - `src/builder/`: editor de site, montador de sistema, revisão e renderizador do site do cliente.
 - `src/data/`: peças (seções), modelos prontos, sistemas e projetos do portfólio.
 - `src/lib/scope.js`: calcula o que o projeto exige (pagamento, banco, login…) e monta a mensagem do WhatsApp.
-- `src/lib/generator.js`: engenharia reversa por URL e geração por texto. **Hoje é uma simulação local por regras**; defina `VITE_GENERATOR_ENDPOINT` para ligar a IA no servidor.
+- `api/generate.js` (função do Vercel) + `api/_lib/`: lê o site de referência de verdade (HTML, folhas de estilo, imagens, cores, fontes, ordem das seções; quando o site bloqueia robôs, usa um leitor com navegador e dados públicos da marca) e entrega ao Claude (`claude-opus-5-5`) para montar o kit editável. Sem `ANTHROPIC_API_KEY`, monta por regras com os dados reais lidos.
+- `src/lib/generator.js`: chama `/api/generate` e converte a resposta em peças do construtor; sem servidor, cai na simulação local.
 - `src/lib/supabase.js` + `supabase/schema.sql`: salva os pedidos de orçamento quando as chaves existem.
 
 ## Variáveis de ambiente
@@ -25,7 +26,8 @@ npm run build    # gera dist/
 Copie `.env.example` para `.env` (e configure as mesmas no Vercel):
 
 - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`: sem elas o site funciona, só não salva no banco.
-- `VITE_GENERATOR_ENDPOINT`: endpoint da IA (opcional).
+- `ANTHROPIC_API_KEY`: chave da API do Claude, **só no servidor** (Vercel). Liga a IA na cópia de sites e na geração por texto.
+- `VITE_GENERATOR_ENDPOINT`: outro endpoint de geração (opcional).
 
 ## Deploy
 

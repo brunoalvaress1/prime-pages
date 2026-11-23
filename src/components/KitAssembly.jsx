@@ -2,6 +2,14 @@ import { useMemo, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { RoundedBox, Html, Environment, Lightformer } from '@react-three/drei'
 import * as THREE from 'three'
+import { DPR, GL, AutoDpr, useFrameloop } from './perf.jsx'
+
+// Materiais compartilhados: dezenas de malhas usam os mesmos 3 materiais (menos trocas de shader).
+const M_HI = new THREE.MeshStandardMaterial({ color: '#6fa2ff', roughness: 0.35, metalness: 0.05 })
+const M_LO = new THREE.MeshStandardMaterial({ color: '#123f99', roughness: 0.6 })
+const M_CALL = new THREE.MeshStandardMaterial({ color: '#ffb020', roughness: 0.35 })
+const M_PART = new THREE.MeshPhysicalMaterial({ color: '#1f6fff', roughness: 0.32, clearcoat: 0.8, clearcoatRoughness: 0.25 })
+const BOX = new THREE.BoxGeometry(1, 1, 1)
 
 const MOLD = '#1f6fff'
 const MOLD_HI = '#6fa2ff'
@@ -22,11 +30,9 @@ const ease = (t) => 1 - Math.pow(1 - Math.min(Math.max(t, 0), 1), 4)
 
 function Details({ kind, w, h }) {
   const raised = (x, y, sw, sh, color = MOLD_HI) => (
-    <mesh key={`${x}:${y}:${sw}`} position={[x, y, 0.075]}>
-      <boxGeometry args={[sw, sh, 0.03]} />
-      <meshPhysicalMaterial color={color} roughness={0.35} clearcoat={0.6} />
-    </mesh>
+    <mesh key={`${x}:${y}:${sw}`} position={[x, y, 0.075]} scale={[sw, sh, 0.03]} geometry={BOX} material={color === MOLD_HI ? M_HI : M_CALL} />
   )
+  const plate = (x, y, sw, sh, z = 0.06) => <mesh key={`p${x}:${y}`} position={[x, y, z]} scale={[sw, sh, 0.02]} geometry={BOX} material={M_LO} />
   if (kind === 'hero')
     return (
       <>
@@ -34,19 +40,13 @@ function Details({ kind, w, h }) {
         {raised(-w / 2 + 0.8, 0.12, 1.2, 0.07)}
         {raised(-w / 2 + 0.6, -0.08, 0.8, 0.07)}
         {raised(-w / 2 + 0.45, -0.38, 0.5, 0.16, '#ffb020')}
-        <mesh position={[w / 2 - 0.85, 0, 0.06]}>
-          <boxGeometry args={[1.4, h - 0.3, 0.02]} />
-          <meshPhysicalMaterial color={MOLD_LO} roughness={0.6} />
-        </mesh>
+        {plate(w / 2 - 0.85, 0, 1.4, h - 0.3)}
       </>
     )
   if (kind === 'card')
     return (
       <>
-        <mesh position={[0, 0.17, 0.06]}>
-          <boxGeometry args={[w - 0.2, 0.36, 0.02]} />
-          <meshPhysicalMaterial color={MOLD_LO} roughness={0.6} />
-        </mesh>
+        {plate(0, 0.17, w - 0.2, 0.36)}
         {raised(-0.12, -0.2, w - 0.45, 0.06)}
         {raised(-0.22, -0.33, w - 0.65, 0.05)}
       </>
@@ -56,10 +56,7 @@ function Details({ kind, w, h }) {
       <>
         {[-0.27, 0, 0.27].map((x) =>
           [0.2, -0.17].map((y) => (
-            <mesh key={x + ':' + y} position={[x, y, 0.06]}>
-              <boxGeometry args={[0.23, 0.3, 0.02]} />
-              <meshPhysicalMaterial color={MOLD_LO} roughness={0.6} />
-            </mesh>
+            plate(x, y, 0.23, 0.3)
           )),
         )}
       </>
@@ -69,8 +66,8 @@ function Details({ kind, w, h }) {
       <>
         {raised(-1.1, 0.12, 1.0, 0.12)}
         {raised(-1.2, -0.08, 0.8, 0.05)}
-        <mesh position={[0.75, 0.1, 0.06]}><boxGeometry args={[1.6, 0.16, 0.02]} /><meshPhysicalMaterial color={MOLD_LO} /></mesh>
-        <mesh position={[0.75, -0.14, 0.06]}><boxGeometry args={[1.6, 0.16, 0.02]} /><meshPhysicalMaterial color={MOLD_LO} /></mesh>
+        {plate(0.75, 0.1, 1.6, 0.16)}
+        {plate(0.75, -0.14, 1.6, 0.16)}
       </>
     )
   if (kind === 'nav')
@@ -104,9 +101,7 @@ function Part({ p, index, clock, reduced }) {
 
   return (
     <group ref={ref}>
-      <RoundedBox args={[w, h, 0.12]} radius={0.035} smoothness={3}>
-        <meshPhysicalMaterial color={MOLD} roughness={0.32} clearcoat={0.8} clearcoatRoughness={0.25} />
-      </RoundedBox>
+      <RoundedBox args={[w, h, 0.12]} radius={0.035} smoothness={2} material={M_PART} />
       <Details kind={p.detail} w={w} h={h} />
       <Html position={[-w / 2 - 0.08, h / 2 - 0.04, 0.1]} center={false} zIndexRange={[5, 0]} className="callout-anchor">
         <span className="callout"><b>{p.id}</b>{p.name}</span>
@@ -141,7 +136,7 @@ function Sprue({ clock }) {
       {bars.map(([pos, size], i) => (
         <mesh key={i} position={[pos[0], pos[1], 0]}>
           <boxGeometry args={[size[0], size[1], 0.06]} />
-          <meshPhysicalMaterial color={MOLD} roughness={0.35} transparent />
+          <meshStandardMaterial color={MOLD} roughness={0.35} transparent />
         </mesh>
       ))}
     </group>
@@ -174,6 +169,7 @@ export default function KitAssembly({ scrollRef }) {
   const clock = useRef(reduced ? 10 : 0)
   clock.explode ??= 0.6
   const pointer = useRef({ x: 0, y: 0 })
+  const frameloop = useFrameloop()
 
   return (
     <div
@@ -184,11 +180,12 @@ export default function KitAssembly({ scrollRef }) {
         pointer.current.y = ((e.clientY - r.top) / r.height) * 2 - 1
       }}
     >
-      <Canvas dpr={[1, 1.75]} camera={{ position: [0, 0, 9.5], fov: 36 }} gl={{ antialias: true, alpha: true }}>
+      <Canvas dpr={DPR} frameloop={frameloop} camera={{ position: [0, 0, 9.5], fov: 36 }} gl={GL}>
+        <AutoDpr />
         <ambientLight intensity={0.35} />
         <directionalLight position={[-4, 6, 6]} intensity={2.2} color="#e8f0ff" />
         <directionalLight position={[5, -3, 2]} intensity={0.7} color="#ffb020" />
-        <Environment resolution={256}>
+        <Environment resolution={128}>
           <Lightformer intensity={2.4} position={[0, 5, -4]} scale={[12, 3, 1]} />
           <Lightformer intensity={1.2} position={[-6, 0, 3]} rotation-y={Math.PI / 2} scale={[8, 3, 1]} />
           <Lightformer intensity={0.6} color="#ffb020" position={[6, -2, 2]} rotation-y={-Math.PI / 2} scale={[6, 2, 1]} />

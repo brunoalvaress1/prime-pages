@@ -1,7 +1,8 @@
 import { Suspense, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls, Environment, Float, useGLTF, Center, MeshDistortMaterial, RoundedBox, Lightformer, MeshTransmissionMaterial } from '@react-three/drei'
+import { OrbitControls, Environment, Float, useGLTF, Center, MeshDistortMaterial, RoundedBox, Lightformer } from '@react-three/drei'
+import { DPR, GL, AutoDpr, useFrameloop } from './perf.jsx'
 
 function Model({ url }) {
   const { scene } = useGLTF(url)
@@ -15,7 +16,8 @@ function Model({ url }) {
 function Mat({ material, color }) {
   if (material === 'metal') return <meshStandardMaterial color={color} metalness={1} roughness={0.18} />
   if (material === 'glass')
-    return <MeshTransmissionMaterial color={color} thickness={0.6} roughness={0.05} transmission={1} ior={1.35} chromaticAberration={0.06} backside samples={6} resolution={256} />
+    // transmissão nativa do three: bem mais leve que o MeshTransmissionMaterial (que redesenha a cena várias vezes por quadro)
+    return <meshPhysicalMaterial color={color} transmission={1} thickness={0.6} roughness={0.06} ior={1.4} clearcoat={1} attenuationColor={color} attenuationDistance={2.5} />
   if (material === 'matte') return <meshStandardMaterial color={color} roughness={0.9} metalness={0} />
   return <meshPhysicalMaterial color={color} roughness={0.22} clearcoat={1} clearcoatRoughness={0.15} metalness={0.05} />
 }
@@ -82,10 +84,10 @@ function Shape({ shape, color, material }) {
   return (
     <Float speed={1.4} rotationIntensity={0.35} floatIntensity={0.6}>
       <group ref={ref}>
-        {shape === 'knot' && <mesh><torusKnotGeometry args={[0.9, 0.3, 240, 36]} />{m}</mesh>}
+        {shape === 'knot' && <mesh><torusKnotGeometry args={[0.9, 0.3, 160, 28]} />{m}</mesh>}
         {shape === 'sphere' && (
           <mesh>
-            <icosahedronGeometry args={[1.2, 48]} />
+            <icosahedronGeometry args={[1.2, 24]} />
             <MeshDistortMaterial color={color} distort={0.38} speed={2} roughness={material === 'matte' ? 0.8 : 0.15} metalness={material === 'metal' ? 0.9 : 0.1} />
           </mesh>
         )}
@@ -144,13 +146,15 @@ function Shape({ shape, color, material }) {
 }
 
 export default function Scene3D({ shape = 'knot', color = '#1f6fff', material = 'glossy', glb, interactive = true, zoom = 4.6 }) {
+  const frameloop = useFrameloop()
   return (
-    <Canvas dpr={[1, 1.75]} camera={{ position: [0, 0, zoom], fov: 40 }} gl={{ antialias: true, alpha: true }}>
+    <Canvas dpr={DPR} frameloop={frameloop} camera={{ position: [0, 0, zoom], fov: 40 }} gl={GL}>
+      <AutoDpr />
       <ambientLight intensity={0.5} />
       <directionalLight position={[3, 4, 5]} intensity={1.6} />
       <Suspense fallback={null}>
         {glb ? <Model url={glb} /> : <Shape shape={shape} color={color} material={material} />}
-        <Environment resolution={256}>
+        <Environment resolution={128}>
           <Lightformer intensity={2} position={[0, 4, -6]} scale={[10, 4, 1]} />
           <Lightformer intensity={1.2} position={[-5, 1, 2]} rotation-y={Math.PI / 2} scale={[6, 2, 1]} />
           <Lightformer intensity={0.8} position={[5, -1, 2]} rotation-y={-Math.PI / 2} scale={[6, 2, 1]} />

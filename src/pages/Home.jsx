@@ -14,7 +14,7 @@ import '../styles/carousel.css'
 import '../styles/home3d.css'
 
 const KitAssembly = lazy(() => import('../components/KitAssembly.jsx'))
-const PartsScene = lazy(() => import('../components/PartsScene.jsx'))
+const LiquidParts = lazy(() => import('../components/LiquidParts.jsx'))
 const SystemScene = lazy(() => import('../components/SystemScene.jsx'))
 
 const FLAG_ICON = { payments: 'pay', database: 'db', auth: 'lock', admin: 'panel', notifications: 'bell', integrations: 'plug', reports: 'chart', '3d': 'cube', mobile: 'phone' }
@@ -95,9 +95,11 @@ function Hero() {
         </div>
 
         <div className="hero-stage" aria-hidden="true">
-          <Suspense fallback={<div className="kit-canvas is-loading" />}>
-            <KitAssembly scrollRef={scrollRef} />
-          </Suspense>
+          <InView className="hero-stage-in" margin="0px" fallback={<div className="kit-canvas is-loading" />}>
+            <Suspense fallback={<div className="kit-canvas is-loading" />}>
+              <KitAssembly scrollRef={scrollRef} />
+            </Suspense>
+          </InView>
         </div>
       </div>
     </section>
@@ -184,7 +186,6 @@ function PartsTree() {
   const [active, setActive] = useState('products')
   const b = BLOCKS[active]
   const group = b.part[0]
-  const alt = Number(b.part.slice(1)) % 2 === 0
   return (
     <section className="parts" id="pecas">
       <div className="wrap">
@@ -220,9 +221,10 @@ function PartsTree() {
           </div>
 
           <div className="pt-stage">
+            <span className="ps-tag pt-tag" key={b.part}>{b.part} · {b.label}</span>
             <InView className="pt-canvas" fallback={<div className="pt-canvas-ph" />}>
               <Suspense fallback={<div className="pt-canvas-ph" />}>
-                <PartsScene group={group} alt={alt} needs={b.needs} label={`${b.part} · ${b.label}`} />
+                <LiquidParts needs={b.needs} label={`${b.part} · ${b.label}`} />
               </Suspense>
             </InView>
             <div className="pt-card" aria-live="polite">

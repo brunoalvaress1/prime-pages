@@ -225,7 +225,7 @@ export default function Builder() {
   }
 
   return (
-    <div className="builder">
+    <div className={`builder ${state.step === 'build' && state.kind === 'site' ? 'is-workspace' : ''}`}>
       <header className="b-top">
         <Link to="/" className="b-logo" aria-label="Voltar para o site"><Logo height={24} /></Link>
         <ol className="b-steps">

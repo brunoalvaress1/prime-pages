@@ -87,16 +87,93 @@ function fromTemplate(tplId, themeKey) {
   return { tpl, blocks: tpl.blocks(), themeKey: themeKey || tpl.theme }
 }
 
+// ---- spec do servidor → peças do construtor ----
+const ITEM_TYPES = ['services', 'stats', 'products', 'menu', 'pricing', 'steps', 'team', 'testimonials', 'faq']
+const LAYOUT_OK = { hero: ['split', 'full', 'center', 'editorial', '3d'], about: ['split', 'reverse', 'stacked'], services: ['cards', 'list', 'images'], gallery: ['grid', 'bento', 'strip'] }
+
+export function specToProject(spec, images = []) {
+  const pic = (i) => (Number.isInteger(i) && i >= 0 && images[i] ? images[i] : '')
+  const f3 = spec.float3d && spec.float3d.shape && spec.float3d.shape !== 'none' ? spec.float3d : null
+  const blocks = []
+  for (const s of spec.sections || []) {
+    if (!BLOCKS_OK.has(s.type)) continue
+    const p = {}
+    for (const k of ['title', 'subtitle', 'text', 'cta']) if (s[k]) p[k] = s[k]
+    p.kicker = s.kicker || ''
+    if (s.type === 'hero') p.cta2 = s.cta2 || ''
+    if (LAYOUT_OK[s.type]?.includes(s.layout)) p.layout = s.layout
+    if (pic(s.image)) p.image = pic(s.image)
+    if (s.type === 'about' && pic(s.image2)) {
+      p.image2 = pic(s.image2)
+      p.showImage2 = true
+    }
+    if (s.type === 'gallery') {
+      const g = (s.images || []).map(pic).filter(Boolean)
+      if (g.length) p.images = g.length >= 3 ? g.slice(0, 8) : [...g, ...images.filter((u) => !g.includes(u)).slice(0, 3 - g.length)]
+    }
+    if (ITEM_TYPES.includes(s.type) && s.items?.length) {
+      p.items = s.items.slice(0, 8).map((it) => {
+        const o = { title: it.title || '', text: it.text || '' }
+        if (['products', 'menu', 'pricing'].includes(s.type)) o.price = it.price || ''
+        if (['services', 'products', 'team'].includes(s.type)) o.image = pic(it.image)
+        return o
+      })
+    }
+    if (s.type === 'hero' && f3) {
+      if (p.layout === '3d') Object.assign(p, { shape: f3.shape, color: f3.color })
+      else p.float3d = { shape: f3.shape, material: f3.material, color: f3.color, pos: 'right' }
+    }
+    if (s.type === 'hero' && p.layout === 'full' && p.image) p.media = { image: { overlay: 40 } }
+    p.style = { bg: s.bg || 'auto', align: s.align || 'left', ...(s.type === 'hero' ? { pad: 'l' } : {}) }
+    blocks.push(makeBlock(s.type, p))
+  }
+  if (!blocks.some((b) => b.type === 'footer')) blocks.push(makeBlock('footer', { text: `© ${spec.name}` }))
+  const t = spec.theme || {}
+  const theme = { ...THEMES.prime, ...t, name: 'Do site', radius: Number.isFinite(t.radius) ? t.radius : 12 }
+  return { name: spec.name || 'Meu site', themeKey: 'custom', theme, blocks }
+}
+const BLOCKS_OK = new Set(['hero', 'marquee', 'about', 'services', 'stats', 'gallery', 'products', 'menu', 'booking', 'pricing', 'steps', 'team', 'testimonials', 'faq', 'blog', 'login', 'model3d', 'cta', 'map', 'contact', 'footer'])
+
+async function callServer(body, onStep, steps) {
+  let i = 0
+  onStep?.(steps[0])
+  const timer = setInterval(() => {
+    i = Math.min(i + 1, steps.length - 1)
+    onStep?.(steps[i])
+  }, 2600)
+  try {
+    const res = await fetch(ENDPOINT || '/api/generate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) })
+    const ct = res.headers.get('content-type') || ''
+    if (!ct.includes('json')) return null // sem servidor (ex.: hospedagem estática): usa o modo local
+    const j = await res.json()
+    if (!res.ok) throw new Error(j.error || 'Não conseguimos montar agora.')
+    return j
+  } catch (e) {
+    if (e instanceof TypeError) return null
+    throw e
+  } finally {
+    clearInterval(timer)
+  }
+}
+
 // ---- Engenharia reversa por URL ----
 export async function analyzeUrl(raw, onStep) {
   const url = normalizeUrl(raw)
   if (!url) throw new Error('Esse endereço não parece um site. Confira e tente de novo, ex.: www.seusite.com.br')
 
-  if (ENDPOINT) {
-    onStep?.('Enviando para análise…')
-    const res = await fetch(ENDPOINT, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mode: 'url', input: url.href }) })
-    if (!res.ok) throw new Error('Não conseguimos analisar esse site agora. Tente outro endereço ou comece por um modelo.')
-    return await res.json()
+  const r = await callServer({ mode: 'url', input: url.href }, onStep, [
+    `Conectando em ${url.hostname}`,
+    'Baixando a página e as folhas de estilo',
+    'Extraindo textos, imagens, cores e fontes',
+    'Identificando as seções na ordem do original',
+    'A IA está montando o kit com base no site',
+    'Ajustando paleta e tipografia',
+    'Quase lá…',
+  ])
+  if (r?.spec) {
+    const proj = specToProject(r.spec, r.images)
+    onStep?.(`Pronto: ${proj.blocks.length} seções montadas`)
+    return { ...proj, analysis: { ...r.meta, host: url.hostname, summary: r.spec.summary, sections: proj.blocks.map((b) => b.type), palette: [proj.theme.bg, proj.theme.surface, proj.theme.accent, proj.theme.text], font: proj.theme.headingFont } }
   }
 
   const text = (url.hostname + url.pathname).toLowerCase()
@@ -142,11 +219,10 @@ export async function generateFromPrompt(prompt, onStep) {
   const text = prompt.toLowerCase().trim()
   if (text.length < 12) throw new Error('Escreva um pouco mais: que tipo de negócio é e o que o site precisa ter.')
 
-  if (ENDPOINT) {
-    onStep?.('Interpretando o pedido…')
-    const res = await fetch(ENDPOINT, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mode: 'prompt', input: prompt }) })
-    if (!res.ok) throw new Error('Não conseguimos gerar agora. Tente de novo em instantes.')
-    return await res.json()
+  const r = await callServer({ mode: 'prompt', input: prompt }, onStep, ['Lendo o seu pedido', 'A IA está entendendo o negócio', 'Escolhendo seções e textos', 'Buscando fotos que combinam', 'Aplicando cores e fontes', 'Quase lá…'])
+  if (r?.spec) {
+    const proj = specToProject(r.spec, r.images)
+    return { ...proj, analysis: { ...r.meta, summary: r.spec.summary, segment: r.spec.segment } }
   }
 
   const seg = SEGMENTS.find((s) => has(text, s.words))

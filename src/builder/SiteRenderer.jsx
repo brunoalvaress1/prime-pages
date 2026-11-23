@@ -2,6 +2,8 @@ import { createContext, lazy, Suspense, useContext, useRef } from 'react'
 import Icon from '../components/Icon.jsx'
 import { BLOCKS } from '../data/blocks.js'
 import { imageCss } from './imageStyle.js'
+import { ensureFonts } from '../lib/fonts.js'
+import InView from '../components/InView.jsx'
 
 const Scene3D = lazy(() => import('../components/Scene3D.jsx'))
 
@@ -182,11 +184,11 @@ function Items({ block, edit, render }) {
 function Three({ p, accent, className, interactive = true }) {
   if (useContext(Ctx).no3d) return <div className={className + " cs-3d-static"} aria-hidden="true"><span style={{ background: p.color || accent }} /></div>
   return (
-    <div className={className}>
+    <InView className={className} margin="100px" fallback={<div className="cs-3d-loading">Carregando 3D…</div>}>
       <Suspense fallback={<div className="cs-3d-loading">Carregando 3D…</div>}>
         <Scene3D shape={p.shape} color={p.color || accent} material={p.material} glb={p.glb} interactive={interactive} />
       </Suspense>
-    </div>
+    </InView>
   )
 }
 
@@ -438,6 +440,7 @@ function Section({ block, edit, theme }) {
 
 export default function SiteRenderer({ project, editing, selected, selImg, onSelect, onSelectImage, onEdit, onMedia, device, onAction, cartCount = 0, signedIn, page, no3d }) {
   const th = project.theme
+  ensureFonts([th.font, th.headingFont])
   const style = {
     '--cs-bg': th.bg,
     '--cs-surface': th.surface,

@@ -57,7 +57,7 @@ export const THEMES = {
   tech: { name: 'Tech', bg: '#0a0814', surface: '#141024', text: '#eeeaff', muted: '#a49cc7', accent: '#8b5cf6', font: 'Space Grotesk', headingFont: 'Unbounded', radius: 18, button: 'pill', headCase: 'tight' },
 }
 
-export const FONTS = ['Manrope', 'DM Sans', 'Archivo', 'Space Grotesk', 'Bricolage Grotesque', 'Syne', 'Unbounded', 'Fraunces', 'Playfair Display', 'Cormorant Garamond']
+export const FONTS = ['Manrope', 'DM Sans', 'Archivo', 'Space Grotesk', 'Bricolage Grotesque', 'Syne', 'Unbounded', 'Fraunces', 'Playfair Display', 'Cormorant Garamond', 'Inter', 'Montserrat', 'Poppins', 'Oswald', 'Bebas Neue', 'Lora', 'Libre Baskerville', 'Raleway', 'Work Sans', 'Outfit']
 
 const tpl = (id, name, segment, theme, cover, tags, blocks) => ({ id, name, segment, theme, cover, tags, blocks })
 

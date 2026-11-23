@@ -73,3 +73,6 @@
   .sy-board { grid-template-columns: 1fr; }
   .sy-stage { min-height: 440px; }
 }
+.pt-tag { position: absolute; top: 18px; left: 18px; z-index: 3; animation: ptTag 0.5s cubic-bezier(0.2, 0.8, 0.2, 1.2) both; }
+@keyframes ptTag { from { opacity: 0; transform: translateY(-8px) scale(0.92); } }
+.ps-fade { transition: opacity 0.35s; }

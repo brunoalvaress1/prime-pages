@@ -66,3 +66,33 @@
   .pc-arrow { display: none; }
   .pc-card { --pc-w: 240px; }
 }
+
+/* ---------- transição entre projetos ---------- */
+.pc-ring { transition: transform 1.15s cubic-bezier(0.65, 0, 0.25, 1); }
+.pc.is-moving .pc-card:not(.is-front) { filter: brightness(0.45) saturate(0.7) blur(1.5px); }
+.pc-card { transform-origin: 50% 50%; }
+.pc-card::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.28) 48%, rgba(140, 180, 255, 0.18) 52%, transparent 65%);
+  transform: translateX(-120%); opacity: 0;
+}
+.pc-card.is-front::after { animation: pcShine 1.3s 0.55s cubic-bezier(0.3, 0, 0.2, 1) both; }
+.pc-card.is-front .pc-shot img { animation: pcPan 9s 1s ease-in-out infinite alternate; }
+@keyframes pcShine { 0% { transform: translateX(-120%); opacity: 1; } 100% { transform: translateX(120%); opacity: 1; } }
+@keyframes pcPan { from { object-position: 0 0; } to { object-position: 0 38%; } }
+.pc-meta { animation: none; }
+.pc-meta > * { animation: pcIn 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.pc-meta > :nth-child(2) { animation-delay: 0.06s; }
+.pc-meta > :nth-child(3) { animation-delay: 0.12s; }
+.pc-meta > :nth-child(4) { animation-delay: 0.18s; }
+.pc-meta.from-right > * { --pc-x: 40px; }
+.pc-meta.from-left > * { --pc-x: -40px; }
+@keyframes pcIn { from { opacity: 0; transform: translateX(var(--pc-x)); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+.pc-dots { position: relative; padding-bottom: 14px; }
+.pc-timer { position: absolute; left: 50%; bottom: 0; width: 120px; height: 2px; margin-left: -60px; border-radius: 2px; background: var(--mold); transform-origin: left; animation: pcTimer 3.8s linear both; opacity: 0.8; }
+.pc.is-paused .pc-timer { animation: none; transform: scaleX(0); }
+@keyframes pcTimer { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) {
+  .pc-card.is-front::after, .pc-card.is-front .pc-shot img, .pc-meta > *, .pc-timer { animation: none; }
+}
+.pc-meta .project-kind { justify-self: center; }

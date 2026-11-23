@@ -113,7 +113,7 @@
 .box-spec dd { margin: 2px 0 0; font-family: var(--f-part); font-size: 22px; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
 
 .hero-stage { position: relative; height: min(78vh, 720px); margin-right: -4vw; }
-.kit-canvas { position: absolute; inset: 0; }
+.kit-canvas, .hero-stage-in { position: absolute; inset: 0; }
 .kit-canvas.is-loading { background: radial-gradient(circle at 50% 50%, rgba(31, 111, 255, 0.12), transparent 60%); }
 .callout {
   display: inline-flex;

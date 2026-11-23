@@ -14,6 +14,20 @@ export default function ProjectsCarousel() {
   const [radius, setRadius] = useState(560)
   const active = ((Math.round(-angle / step) % n) + n) % n
   const p = PROJECTS[active]
+  const [moving, setMoving] = useState(false)
+  const prevActive = useRef(active)
+  const [dir, setDir] = useState(1)
+
+  // transição entre projetos: o anel inclina enquanto gira e o texto entra pelo lado do movimento
+  useEffect(() => {
+    if (prevActive.current === active) return
+    const d = (active - prevActive.current + n) % n
+    setDir(d <= n / 2 ? 1 : -1)
+    prevActive.current = active
+    setMoving(true)
+    const t = setTimeout(() => setMoving(false), 1000)
+    return () => clearTimeout(t)
+  }, [active, n])
 
   useEffect(() => {
     const fit = () => setRadius(window.innerWidth < 700 ? 300 : window.innerWidth < 1100 ? 440 : 600)
@@ -25,9 +39,9 @@ export default function ProjectsCarousel() {
   // giro automático lento, sempre parando com um card de frente
   useEffect(() => {
     if (paused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    const t = setInterval(() => setAngle((a) => Math.round((a - step) / step) * step), 3800)
-    return () => clearInterval(t)
-  }, [paused, step])
+    const t = setTimeout(() => setAngle((a) => Math.round((a - step) / step) * step), 3800)
+    return () => clearTimeout(t)
+  }, [paused, step, active])
 
   const goTo = (i) => {
     // menor caminho até o card i
@@ -59,9 +73,9 @@ export default function ProjectsCarousel() {
   }
 
   return (
-    <div className="pc" onMouseEnter={() => setPaused(true)} onMouseLeave={() => !drag.current && setPaused(false)}>
+    <div className={`pc ${moving ? 'is-moving' : ''} ${paused ? 'is-paused' : ''}`} onMouseEnter={() => setPaused(true)} onMouseLeave={() => !drag.current && setPaused(false)}>
       <div className="pc-stage" onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerLeave={() => drag.current && up()}>
-        <div className="pc-ring" ref={ringRef} style={{ transform: `translateZ(${-radius}px) rotateY(${angle}deg)` }}>
+        <div className="pc-ring" ref={ringRef} style={{ transform: `translateZ(${-radius - (moving ? 120 : 0)}px) rotateX(${moving ? -4 : 0}deg) rotateY(${angle}deg)` }}>
           {PROJECTS.map((x, i) => {
             const rel = ((((i * step + angle) % 360) + 540) % 360) - 180
             const front = Math.abs(rel) < step / 2
@@ -85,7 +99,7 @@ export default function ProjectsCarousel() {
 
       <div className="pc-info" aria-live="polite">
         <button className="pc-arrow" onClick={() => goTo((active - 1 + n) % n)} aria-label="Projeto anterior"><Icon name="back" /></button>
-        <div className="pc-meta" key={p.name}>
+        <div className={`pc-meta ${dir > 0 ? 'from-right' : 'from-left'}`} key={p.name}>
           <span className={`project-kind ${p.kind === 'Sistema' ? 'is-system' : ''}`}>{p.kind}</span>
           <h3>{p.name}</h3>
           <p>{p.text}</p>
@@ -94,6 +108,7 @@ export default function ProjectsCarousel() {
         <button className="pc-arrow" onClick={() => goTo((active + 1) % n)} aria-label="Próximo projeto"><Icon name="arrow" /></button>
       </div>
       <div className="pc-dots">
+        <span className="pc-timer" key={active + (paused ? 'p' : '')} aria-hidden="true" />
         {PROJECTS.map((x, i) => <button key={x.name} className={i === active ? 'is-on' : ''} onClick={() => goTo(i)} aria-label={x.name} />)}
       </div>
     </div>
