@@ -65,7 +65,7 @@ export const TEMPLATES = [
   tpl('restaurante', 'Restaurante', 'Gastronomia', 'bistro', img(P.dining, 900), ['Reserva', 'Cardápio', 'Galeria mosaico'], () => [
     makeBlock('hero', { layout: 'full', kicker: 'Cozinha autoral · Leme', title: 'Fogo, tempo e ingrediente bom.', subtitle: 'Jantar à la carte de terça a sábado. Almoço executivo de segunda a sexta.', cta: 'Reservar mesa', cta2: 'Ver cardápio', float3d: { shape: 'wineglass', material: 'glass', color: '#f4d9a8', pos: 'right' }, image: img(P.dining), media: { image: { overlay: 35 } }, style: { pad: 'l' } }),
     makeBlock('marquee', { text: 'Reservas pelo WhatsApp · Carta de vinhos · Estacionamento conveniado · Eventos privados' }),
-    makeBlock('about', { layout: 'reverse', title: 'Uma casa para comer devagar', text: 'Cozinha aberta, brasa de lenha e um cardápio que muda com a estação. Cada prato sai do jeito que a gente come em casa, só que com mais cuidado.', image: img(P.restaurant, 900), image2: img(P.food, 600), media: { image: shape('arch'), image2: shape('circle', { border: 6, borderColor: '#14100d' }) } }),
+    makeBlock('about', { layout: 'story', title: 'Uma casa para comer devagar', text: 'Cozinha aberta, brasa de lenha e um cardápio que muda com a estação. Cada prato sai do jeito que a gente come em casa, só que com mais cuidado.', image: img(P.restaurant, 900), image2: img(P.food, 600), media: { image: shape('arch'), image2: shape('circle', { border: 6, borderColor: '#14100d' }) } }),
     makeBlock('menu', { title: 'Da brasa', items: [
       { title: 'Ancho na lenha', price: 'R$ 89', text: 'Purê de mandioquinha, farofa de alho e chimichurri da casa.' },
       { title: 'Polvo grelhado', price: 'R$ 96', text: 'Batatas ao murro, páprica defumada e azeite de ervas.' },
@@ -100,7 +100,7 @@ export const TEMPLATES = [
   tpl('salao', 'Salão & estética', 'Beleza', 'beleza', img(P.makeup, 900), ['Retrato P&B', 'Arcos', 'Agenda'], () => [
     makeBlock('hero', { layout: 'editorial', kicker: 'Atelier de beleza', title: 'Beleza com hora marcada', subtitle: 'Cabelo, maquiagem e estética em um espaço feito para você desacelerar.', cta: 'Agendar horário', float3d: { shape: 'bottle', material: 'glass', color: '#e9cfc4', pos: 'corner' }, image: img(P.makeup, 1400), media: { image: shape('half-top', { grayscale: 100, contrast: 108, ratio: '21/9', y: 30 }) }, style: { align: 'center', pad: 'l' } }),
     makeBlock('marquee', { text: 'Coloração · Corte · Escova · Maquiagem · Design de sobrancelhas · Manicure' }),
-    makeBlock('services', { layout: 'images', title: 'Serviços', items: [
+    makeBlock('services', { layout: 'index', title: 'Serviços', items: [
       { title: 'Cabelo', text: 'Corte, coloração e tratamentos.', image: img(P.salonWash, 700) },
       { title: 'Maquiagem', text: 'Social, noivas e produções.', image: img(P.beauty, 700) },
       { title: 'Espaço', text: 'Ambiente climatizado e café.', image: img(P.salonRoom, 700) },

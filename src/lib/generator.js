@@ -89,7 +89,7 @@ function fromTemplate(tplId, themeKey) {
 
 // ---- spec do servidor → peças do construtor ----
 const ITEM_TYPES = ['services', 'stats', 'products', 'menu', 'pricing', 'steps', 'team', 'testimonials', 'faq', 'carousel']
-const LAYOUT_OK = { video: ['wide', 'split'], carousel: ['coverflow', '3d', 'slider'], hero: ['split', 'full', 'center', 'editorial', '3d'], about: ['split', 'reverse', 'stacked'], services: ['cards', 'list', 'images', 'feature', 'bento'], gallery: ['grid', 'bento', 'strip', 'marquee'] }
+const LAYOUT_OK = { video: ['wide', 'split'], carousel: ['coverflow', '3d', 'slider'], hero: ['split', 'full', 'center', 'editorial', '3d'], about: ['split', 'reverse', 'stacked', 'story'], services: ['cards', 'list', 'images', 'index', 'feature', 'bento'], gallery: ['grid', 'bento', 'strip', 'marquee'] }
 
 export function specToProject(spec, images = [], videos = [], contact = {}) {
   const pic = (i) => (Number.isInteger(i) && i >= 0 && images[i] ? images[i] : '')

@@ -46,6 +46,7 @@ export const BLOCKS = {
       ['split', 'Imagem ao lado'],
       ['reverse', 'Imagem do outro lado'],
       ['stacked', 'Imagem em cima'],
+      ['story', 'Editorial'],
     ],
     defaults: {
       layout: 'split',
@@ -64,6 +65,7 @@ export const BLOCKS = {
       ['cards', 'Cartões'],
       ['list', 'Lista numerada'],
       ['images', 'Com fotos'],
+      ['index', 'Lista interativa'],
       ['feature', 'Destaque grande'],
       ['bento', 'Mosaico'],
     ],

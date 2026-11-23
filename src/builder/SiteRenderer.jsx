@@ -182,6 +182,122 @@ function Items({ block, edit, render }) {
   return block.props.items.map((it, i) => render(it, (patch) => set(i, patch), i))
 }
 
+// Progresso de rolagem de um elemento (0 quando entra por baixo, 1 quando sai por cima),
+// escrito direto na variável CSS --p, sem re-renderizar o React a cada quadro.
+// Funciona tanto na janela quanto dentro da prévia do construtor (que rola por dentro).
+function useScrollVar(ref, enabled) {
+  useEffect(() => {
+    const el = ref.current
+    if (!el || !enabled) return
+    let raf = 0
+    const update = () => {
+      raf = 0
+      const r = el.getBoundingClientRect()
+      const vh = window.innerHeight || 800
+      const p = Math.min(1, Math.max(0, (vh - r.top) / (vh + r.height)))
+      el.style.setProperty('--p', p.toFixed(4))
+    }
+    const on = () => (raf ||= requestAnimationFrame(update))
+    update()
+    document.addEventListener('scroll', on, { capture: true, passive: true })
+    window.addEventListener('resize', on)
+    return () => {
+      document.removeEventListener('scroll', on, { capture: true })
+      window.removeEventListener('resize', on)
+      cancelAnimationFrame(raf)
+    }
+  }, [ref, enabled])
+}
+
+// Liga uma classe uma única vez quando o elemento aparece (para revelações que não se repetem).
+function useSeenOnce(ref, enabled) {
+  const [seen, setSeen] = useState(!enabled)
+  useEffect(() => {
+    if (!enabled || !ref.current) return setSeen(true)
+    const io = new IntersectionObserver(([e]) => e.isIntersecting && (setSeen(true), io.disconnect()), { threshold: 0.25 })
+    io.observe(ref.current)
+    return () => io.disconnect()
+  }, [ref, enabled])
+  return seen
+}
+
+// ---------- Sobre "Editorial": declaração grande que acende enquanto se lê ----------
+function AboutStory({ block, t }) {
+  const { no3d } = useContext(Ctx)
+  const p = block.props
+  const textRef = useRef(null)
+  const mediaRef = useRef(null)
+  // a prévia sempre mostra o movimento (é assim que os visitantes verão); a exportação estática (no3d) não
+  const motion = !no3d
+  useScrollVar(textRef, motion)
+  useScrollVar(mediaRef, motion)
+  const open = useSeenOnce(mediaRef, motion)
+  return (
+    <section className={`cs-about is-story ${motion ? 'has-motion' : ''}`}>
+      {t('title', 'h2', 'cs-h2 cs-story-title')}
+      <div className="cs-story-grid">
+        <div className="cs-story-ink" ref={textRef}>
+          {t('text', 'p', 'cs-story-text', true)}
+        </div>
+        <div className={`cs-story-media ${open ? 'is-open' : ''}`} ref={mediaRef}>
+          <div className="cs-story-curtain">
+            <Img block={block} path="image" />
+          </div>
+          {p.image2 || p.showImage2 ? <Img block={block} path="image2" className="cs-story-float" /> : null}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ---------- Serviços "Lista interativa": a linha escolhida troca a foto ao lado ----------
+function ServicesIndex({ block, edit, t, live }) {
+  const { editing } = useContext(Ctx)
+  const p = block.props
+  const [active, setActive] = useState(0)
+  const set = (i, patch) => edit({ items: p.items.map((it, j) => (j === i ? { ...it, ...patch } : it)) })
+  const cur = Math.min(active, p.items.length - 1)
+  return (
+    <section className="cs-list is-services is-index">
+      <div className="cs-sec-head">
+        {t('title', 'h2', 'cs-h2')}
+        {p.text || editing ? t('text', 'p', 'cs-p cs-sec-lead', true) : null}
+      </div>
+      <div className="cs-index">
+        <ul className="cs-index-list">
+          {p.items.map((it, i) => (
+            <li
+              key={i}
+              className={i === cur ? 'is-on' : ''}
+              onMouseEnter={() => setActive(i)}
+              onFocus={() => setActive(i)}
+              onClick={() => setActive(i)}
+              {...(i === cur ? live('service', i) : {})}
+            >
+              <T as="h3" className="cs-index-title" value={it.title} onChange={(v) => set(i, { title: v })} />
+              <div className="cs-index-desc">
+                <div>
+                  <T as="p" className="cs-p" value={it.text} multiline onChange={(v) => set(i, { text: v })} />
+                  <div className="cs-index-pic-m">
+                    <Img block={block} path={`items.${i}.image`} />
+                  </div>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div className="cs-index-media" aria-hidden="true">
+          {p.items.map((it, i) => (
+            <div key={i} className={`cs-index-pic ${i === cur ? 'is-on' : ''}`}>
+              <Img block={block} path={`items.${i}.image`} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 // ---------- Carrossel de fotos: 3D (anel), coverflow ou slider grande ----------
 function Carousel({ block, edit }) {
   const { editing, no3d, selImg } = useContext(Ctx)
@@ -197,7 +313,7 @@ function Carousel({ block, edit }) {
 
   // gira sozinho; pausa com o mouse em cima ou enquanto edita uma foto dele
   useEffect(() => {
-    if (no3d || hover || editingThis || n < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (no3d || hover || editingThis || n < 2) return
     const t = setTimeout(() => go(1), L === 'slider' ? 4200 : 3200)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -464,6 +580,7 @@ function Section({ block, edit, theme }) {
         </div>
       )
     case 'about':
+      if (p.layout === 'story') return <AboutStory block={block} t={t} />
       return (
         <section className={`cs-about is-${p.layout || 'split'}`}>
           <div className="cs-about-copy">
@@ -478,6 +595,7 @@ function Section({ block, edit, theme }) {
       )
     case 'services': {
       const L = p.layout || 'cards'
+      if (L === 'index') return <ServicesIndex block={block} edit={edit} t={t} live={live} />
       const withImg = L === 'images' || L === 'feature' || L === 'bento' || (L === 'cards' && p.items.some((it) => it.image))
       return (
         <section className={`cs-list is-services is-${L}`}>
@@ -493,11 +611,9 @@ function Section({ block, edit, theme }) {
                 <article key={i} className="cs-item" style={{ '--i': i }} {...live('service', i)}>
                   {withImg && <Img block={block} path={`items.${i}.image`} />}
                   {L === 'list' && <span className="cs-num">{String(i + 1).padStart(2, '0')}</span>}
-                  {L === 'cards' && <span className="cs-badge" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>}
                   <div className="cs-item-body">
                     <T as="h3" className="cs-h3" value={it.title} onChange={(v) => set({ title: v })} />
                     <T as="p" className="cs-p" value={it.text} multiline onChange={(v) => set({ text: v })} />
-                    {(L === 'cards' || L === 'feature' || L === 'bento') && <span className="cs-more" aria-hidden="true">Saiba mais <Icon name="arrow" size={14} /></span>}
                   </div>
                 </article>
               )}
@@ -704,7 +820,7 @@ function useReveal(blocks, enabled) {
   const key = blocks.map((b) => b.id).join()
   useEffect(() => {
     if (!enabled) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
+    if (!('IntersectionObserver' in window)) {
       setSeen(new Set(blocks.map((b) => b.id)))
       return
     }
@@ -754,7 +870,7 @@ export default function SiteRenderer({ project, editing, selected, selImg, onSel
   const footer = project.blocks.find((b) => b.type === 'footer')
   return (
     <Ctx.Provider value={ctx}>
-      <div className={`cs-site is-${device || 'desktop'} btn-${th.button || 'solid'} head-${th.headCase || 'normal'} ${onAction ? 'is-live' : ''}`} style={style}>
+      <div className={`cs-site ${no3d ? 'respect-rm' : ''} is-${device || 'desktop'} btn-${th.button || 'solid'} head-${th.headCase || 'normal'} ${onAction ? 'is-live' : ''}`} style={style}>
         <nav className="cs-nav">
           {onAction ? <button type="button" className="cs-nav-brand" onClick={() => onAction('home')}>{project.name}</button> : <strong>{project.name}</strong>}
           {onAction ? (
