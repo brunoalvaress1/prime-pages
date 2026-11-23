@@ -418,7 +418,7 @@ export default function BuildSite({ state, dispatch }) {
           {a && (a.summary || a.simulated) && (
             <span className={`b-badge ${a.ai ? 'is-ai' : ''}`} title={a.summary || ''}>
               {state.origin === 'url' ? `Base: ${a.host}` : 'Gerado do seu texto'}
-              {a.ai ? ' · montado por IA' : a.source === 'direct' ? ' · lido do site' : a.simulated ? ' · pré-análise' : ''}
+              {a.ai ? ` · montado por ${a.provider || 'IA'}` : a.source === 'direct' ? ' · lido do site' : a.simulated ? ' · pré-análise' : ''}
             </span>
           )}
           <div className="b-scope" aria-label="Recursos que o site exige">

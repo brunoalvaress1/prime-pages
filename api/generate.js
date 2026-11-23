@@ -1,7 +1,18 @@
 // POST /api/generate  { mode: 'url' | 'prompt', input }
 // Devolve { spec, images, meta } — o navegador converte o spec em peças do construtor.
 import { scrape, openImages } from './_lib/scrape.js'
-import { aiSpec, heuristicSpec, hasAI, brandFacts } from './_lib/build.js'
+import { aiSpec, heuristicSpec, pickProvider, brandFacts, PROVIDER_LABEL } from './_lib/build.js'
+
+// Tenta a IA; se ela falhar, segue com o montador por regras em vez de dar erro.
+async function tryAI(provider, args) {
+  if (!provider) return { spec: null, error: null }
+  try {
+    return { spec: await aiSpec({ ...args, provider }), error: null }
+  } catch (e) {
+    console.error('[generate] IA falhou:', provider, e?.message)
+    return { spec: null, error: String(e?.message || e).slice(0, 160) }
+  }
+}
 
 export const config = { maxDuration: 120 }
 
@@ -25,7 +36,7 @@ async function readBody(req) {
 }
 
 export async function run({ mode, input }) {
-  const ai = hasAI()
+  const provider = await pickProvider()
   if (mode === 'url') {
     const url = normalizeUrl(input)
     if (!url) throw Object.assign(new Error('Esse endereço não parece um site. Ex.: www.seusite.com.br'), { status: 400 })
@@ -40,15 +51,19 @@ export async function run({ mode, input }) {
       scan.digest.images.push(...imgs.map((i) => ({ url: i.url, alt: i.alt, credit: i.credit })))
       extra = facts
     }
-    const spec = ai ? await aiSpec({ mode, input: url.href, scan, extra }) : heuristicSpec(scan, extra)
-    return { spec, images: scan.digest.images.map((i) => i.url), meta: { ai, source: scan.source, host: scan.host, read: { headings: scan.digest.headings.length, images: scan.digest.images.length, colors: scan.digest.colors.top?.slice(0, 6) || [], fonts: [...(scan.digest.fonts.google || []), ...(scan.digest.fonts.declared || [])].slice(0, 3) } } }
+    const r = await tryAI(provider, { mode, input: url.href, scan, extra })
+    const ai = !!r.spec
+    const spec = r.spec || heuristicSpec(scan, extra)
+    return { spec, images: scan.digest.images.map((i) => i.url), meta: { ai, provider: ai ? PROVIDER_LABEL[provider] : null, aiError: r.error, source: scan.source, host: scan.host, read: { headings: scan.digest.headings.length, images: scan.digest.images.length, colors: scan.digest.colors.top?.slice(0, 6) || [], fonts: [...(scan.digest.fonts.google || []), ...(scan.digest.fonts.declared || [])].slice(0, 3) } } }
   }
 
   const text = String(input || '').trim()
   if (text.length < 12) throw Object.assign(new Error('Escreva um pouco mais: que tipo de negócio é e o que o site precisa ter.'), { status: 400 })
-  if (!ai) return { spec: null, images: [], meta: { ai: false } } // navegador usa o montador local
+  if (!provider) return { spec: null, images: [], meta: { ai: false } } // navegador usa o montador local
   const images = await openImages(text.split(/\s+/).slice(0, 6).join(' '), 10)
-  const spec = await aiSpec({ mode: 'prompt', input: text, extra: { images } })
+  const r = await tryAI(provider, { mode: 'prompt', input: text, extra: { images } })
+  if (!r.spec) return { spec: null, images: [], meta: { ai: false, aiError: r.error } } // navegador usa o montador local
+  const spec = r.spec
   if (spec.imageQuery) {
     const more = await openImages(spec.imageQuery, 10)
     if (more.length > images.length) {
@@ -56,7 +71,7 @@ export async function run({ mode, input }) {
       images.push(...more)
     }
   }
-  return { spec, images: images.map((i) => i.url), meta: { ai: true } }
+  return { spec, images: images.map((i) => i.url), meta: { ai: true, provider: PROVIDER_LABEL[provider] } }
 }
 
 export default async function handler(req, res) {

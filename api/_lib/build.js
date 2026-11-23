@@ -91,16 +91,158 @@ function digestForPrompt(scan) {
   }
 }
 
-export const hasAI = () => !!(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN)
+// ---------- escolha da IA (mesma lógica da Sexta-feira) ----------
+// 1) Claude oficial (pago) se houver ANTHROPIC_API_KEY
+// 2) Free Claude Code rodando no PC (gratuito; só alcançável em desenvolvimento local)
+// 3) NVIDIA NIM (gratuito, na nuvem; funciona no Vercel)
+const FCC_URL = process.env.FCC_URL || 'http://127.0.0.1:8082'
+const NVIDIA_URL = 'https://integrate.api.nvidia.com/v1/chat/completions'
+const NVIDIA_MODELS = (process.env.NVIDIA_MODELOS || 'nvidia/nemotron-3-ultra-550b-a55b,nvidia/nemotron-3.5-lightning-30b-a3b,mistralai/mistral-large-4-1t-a52b')
+  .split(',')
+  .map((m) => m.trim())
+  .filter(Boolean)
+export const PROVIDER_LABEL = { claude: 'Claude', fcc: 'Free Claude Code', nvidia: 'IA da Sexta-feira (NVIDIA)' }
 
-export async function aiSpec({ mode, input, scan, extra }) {
-  const client = new Anthropic()
+async function fccUp() {
+  try {
+    const r = await fetch(FCC_URL + '/v1/models', { signal: AbortSignal.timeout(1500), headers: process.env.FCC_TOKEN ? { 'x-api-key': process.env.FCC_TOKEN } : {} })
+    return r.ok
+  } catch {
+    return false
+  }
+}
+
+export async function pickProvider() {
+  if (process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN) return 'claude'
+  if (process.env.PRIME_IA !== 'nvidia' && (await fccUp())) return 'fcc'
+  if (process.env.NVIDIA_API_KEY) return 'nvidia'
+  return null
+}
+
+// Modelos abertos não têm "formato garantido": descrevemos o JSON no próprio pedido.
+const JSON_HINT = `
+
+Responda APENAS com um objeto JSON válido (sem texto antes ou depois, sem markdown). Omita campos vazios para a resposta ficar curta. Formato:
+{"name":"","segment":"","summary":"","theme":{"bg":"#rrggbb","surface":"#rrggbb","text":"#rrggbb","muted":"#rrggbb","accent":"#rrggbb","font":"${FONTS.join('|')}","headingFont":"(mesma lista)","radius":12,"button":"solid|pill|outline","headCase":"normal|tight|upper"},"imageQuery":"","float3d":{"shape":"${SHAPES.join('|')}","material":"glossy|metal|glass|matte","color":"#rrggbb"},"sections":[{"type":"${BLOCK_TYPES.join('|')}","layout":"","kicker":"","title":"","subtitle":"","text":"","cta":"","cta2":"","image":-1,"image2":-1,"images":[],"items":[{"title":"","text":"","price":"","image":-1}],"bg":"auto|base|surface|accent|dark|light","align":"left|center"}]}`
+
+function parseLoose(text) {
+  let t = String(text || '').replace(/<think>[\s\S]*?<\/think>/g, '').replace(/```(?:json)?/g, '')
+  const a = t.indexOf('{')
+  const b = t.lastIndexOf('}')
+  if (a < 0 || b < a) throw new Error('A IA não devolveu JSON.')
+  t = t.slice(a, b + 1)
+  try {
+    return JSON.parse(t)
+  } catch {
+    return JSON.parse(t.replace(/,\s*([}\]])/g, '$1').replace(/[“”]/g, '"'))
+  }
+}
+
+// Garante tipos e valores válidos, venha de onde vier a resposta.
+function normalizeSpec(raw) {
+  const s = raw && typeof raw === 'object' ? raw : {}
+  const okHex = (c, d) => (/^#[0-9a-f]{6}$/i.test(c || '') ? c : /^#[0-9a-f]{3}$/i.test(c || '') ? '#' + c.slice(1).split('').map((x) => x + x).join('') : d)
+  const font = (f, d) => FONTS.find((x) => x.toLowerCase() === String(f || '').toLowerCase()) || (f ? guessFont([String(f)]) : d)
+  const pick = (v, list, d) => (list.includes(v) ? v : d)
+  const int = (v) => (Number.isInteger(+v) && v !== '' && v !== null ? +v : -1)
+  const str = (v) => (typeof v === 'string' ? v : v == null ? '' : String(v))
+  const th = s.theme || {}
+  const bg = okHex(th.bg, '#0b0b0c')
+  return {
+    name: str(s.name) || 'Meu site',
+    segment: str(s.segment),
+    summary: str(s.summary),
+    theme: {
+      bg,
+      surface: okHex(th.surface, bg),
+      text: okHex(th.text, lumHex(bg) < 0.25 ? '#f2f2f0' : '#121316'),
+      muted: okHex(th.muted, '#8a8f99'),
+      accent: okHex(th.accent, '#1f6fff'),
+      font: font(th.font, 'Inter'),
+      headingFont: font(th.headingFont, font(th.font, 'Inter')),
+      radius: Math.max(0, Math.min(32, Number.isFinite(+th.radius) ? +th.radius : 12)),
+      button: pick(th.button, ['solid', 'pill', 'outline'], 'solid'),
+      headCase: pick(th.headCase, ['normal', 'tight', 'upper'], 'tight'),
+    },
+    imageQuery: str(s.imageQuery),
+    float3d: { shape: pick(s.float3d?.shape, SHAPES, 'none'), material: pick(s.float3d?.material, ['glossy', 'metal', 'glass', 'matte'], 'glossy'), color: okHex(s.float3d?.color, '#1f6fff') },
+    sections: (Array.isArray(s.sections) ? s.sections : [])
+      .filter((x) => x && BLOCK_TYPES.includes(x.type))
+      .slice(0, 14)
+      .map((x) => ({
+        type: x.type,
+        layout: str(x.layout),
+        kicker: str(x.kicker),
+        title: str(x.title),
+        subtitle: str(x.subtitle),
+        text: str(x.text),
+        cta: str(x.cta),
+        cta2: str(x.cta2),
+        image: int(x.image),
+        image2: int(x.image2),
+        images: (Array.isArray(x.images) ? x.images : []).map(int).filter((n) => n >= 0),
+        items: (Array.isArray(x.items) ? x.items : []).slice(0, 8).map((it) => ({ title: str(it?.title), text: str(it?.text), price: str(it?.price), image: int(it?.image) })),
+        bg: pick(x.bg, ['auto', 'base', 'surface', 'accent', 'dark', 'light'], 'auto'),
+        align: pick(x.align, ['left', 'center'], 'left'),
+      })),
+  }
+}
+
+async function viaFcc(payload) {
+  const client = new Anthropic({ baseURL: FCC_URL, apiKey: process.env.FCC_TOKEN || 'fcc', timeout: 110000, maxRetries: 0 })
+  const msg = await client.messages.create({ model: process.env.FCC_MODELO || 'claude-opus-5-5', max_tokens: 12000, system: SYSTEM, messages: [{ role: 'user', content: payload + JSON_HINT }] })
+  return msg.content.filter((b) => b.type === 'text').map((b) => b.text).join('')
+}
+
+async function viaNvidia(payload) {
+  const deadline = Date.now() + 100000
+  let last = null
+  for (const [i, model] of NVIDIA_MODELS.entries()) {
+    const left = deadline - Date.now()
+    if (left < 12000) break
+    // reserva tempo para o próximo modelo (mais rápido) se este não terminar
+    const budget = i < NVIDIA_MODELS.length - 1 ? Math.max(12000, left - 25000) : left
+    // modelos Nemotron: desliga o modo de raciocínio (fica muito mais rápido)
+    const extra = /nemotron/i.test(model) ? { chat_template_kwargs: { enable_thinking: false } } : {}
+    for (const json of [true, false]) {
+      try {
+        const r = await fetch(NVIDIA_URL, {
+          method: 'POST',
+          signal: AbortSignal.timeout(budget),
+          headers: { authorization: `Bearer ${process.env.NVIDIA_API_KEY}`, 'content-type': 'application/json', accept: 'application/json' },
+          body: JSON.stringify({ model, max_tokens: 8192, temperature: 0.4, ...extra, ...(json ? { response_format: { type: 'json_object' } } : {}), messages: [{ role: 'system', content: SYSTEM }, { role: 'user', content: payload + JSON_HINT }] }),
+        })
+        if (r.status === 401 || r.status === 403) throw Object.assign(new Error('Chave da NVIDIA inválida.'), { fatal: true })
+        if (!r.ok) {
+          last = new Error(`${model}: ${r.status}`)
+          if (r.status === 400 && json) continue // tenta o mesmo modelo sem response_format
+          break
+        }
+        const j = await r.json()
+        const text = j.choices?.[0]?.message?.content || ''
+        parseLoose(text) // valida antes de aceitar; se falhar, tenta o próximo modelo
+        return text
+      } catch (e) {
+        if (e.fatal) throw e
+        last = e
+        break
+      }
+    }
+  }
+  throw last || new Error('Nenhum modelo da NVIDIA respondeu.')
+}
+
+export async function aiSpec({ mode, input, scan, extra, provider = 'claude' }) {
   const blocked = mode === 'url' && (!scan?.digest || scan.source === 'blocked')
   const payload =
     mode === 'url'
-      ? `Site de referência para copiar como base:\n${JSON.stringify(digestForPrompt(scan), null, 1)}${extra ? '\n\nInformações públicas encontradas sobre a marca:\n' + JSON.stringify(extra, null, 1) : ''}${blocked ? '\n\nO site bloqueou a leitura automática. Pesquise a marca na web (até 3 buscas) para acertar cores, tom, produtos e estrutura da página inicial.' : ''}`
+      ? `Site de referência para copiar como base:\n${JSON.stringify(digestForPrompt(scan), null, 1)}${extra ? '\n\nInformações públicas encontradas sobre a marca:\n' + JSON.stringify(extra, null, 1) : ''}${blocked ? (provider === 'claude' ? '\n\nO site bloqueou a leitura automática. Pesquise a marca na web (até 3 buscas) para acertar cores, tom, produtos e estrutura da página inicial.' : '\n\nO site bloqueou a leitura automática. Use o que você sabe sobre a marca para acertar cores, tom, produtos e estrutura da página inicial.') : ''}`
       : `Pedido do cliente (monte o site a partir disto):\n"""${input}"""\n\nFotos disponíveis:\n${JSON.stringify((extra?.images || []).map((im, i) => `${i}: ${im.url}  [${im.alt}]`))}`
 
+  if (provider === 'fcc') return normalizeSpec(parseLoose(await viaFcc(payload)))
+  if (provider === 'nvidia') return normalizeSpec(parseLoose(await viaNvidia(payload)))
+
+  const client = new Anthropic()
   const params = {
     model: 'claude-opus-5-5',
     max_tokens: 16000,
@@ -122,8 +264,7 @@ export async function aiSpec({ mode, input, scan, extra }) {
   }
   if (msg.stop_reason === 'refusal') throw new Error('A IA recusou montar esse site.')
   const text = msg.content.filter((b) => b.type === 'text').map((b) => b.text).join('')
-  const start = text.indexOf('{')
-  return JSON.parse(text.slice(start))
+  return normalizeSpec(parseLoose(text))
 }
 
 // ---------- montador por regras (sem chave de IA) ----------

@@ -17,7 +17,7 @@ npm run build    # gera dist/
 - `src/builder/`: editor de site, montador de sistema, revisão e renderizador do site do cliente.
 - `src/data/`: peças (seções), modelos prontos, sistemas e projetos do portfólio.
 - `src/lib/scope.js`: calcula o que o projeto exige (pagamento, banco, login…) e monta a mensagem do WhatsApp.
-- `api/generate.js` (função do Vercel) + `api/_lib/`: lê o site de referência de verdade (HTML, folhas de estilo, imagens, cores, fontes, ordem das seções; quando o site bloqueia robôs, usa um leitor com navegador e dados públicos da marca) e entrega ao Claude (`claude-opus-5-5`) para montar o kit editável. Sem `ANTHROPIC_API_KEY`, monta por regras com os dados reais lidos.
+- `api/generate.js` (função do Vercel) + `api/_lib/`: lê o site de referência de verdade (HTML, folhas de estilo, imagens, cores, fontes, ordem das seções; quando o site bloqueia robôs, usa um leitor com navegador e dados públicos da marca) e entrega a uma IA para montar o kit editável. Ordem: Claude oficial (`ANTHROPIC_API_KEY`), Free Claude Code no PC (`FCC_URL`, só local) ou NVIDIA gratuita (`NVIDIA_API_KEY`, a mesma da Sexta-feira; é a que roda no Vercel). Se a IA falhar, monta por regras com os dados reais lidos.
 - `src/lib/generator.js`: chama `/api/generate` e converte a resposta em peças do construtor; sem servidor, cai na simulação local.
 - `src/lib/supabase.js` + `supabase/schema.sql`: salva os pedidos de orçamento quando as chaves existem.
 
@@ -26,7 +26,8 @@ npm run build    # gera dist/
 Copie `.env.example` para `.env` (e configure as mesmas no Vercel):
 
 - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`: sem elas o site funciona, só não salva no banco.
-- `ANTHROPIC_API_KEY`: chave da API do Claude, **só no servidor** (Vercel). Liga a IA na cópia de sites e na geração por texto.
+- `NVIDIA_API_KEY`: IA gratuita da NVIDIA (build.nvidia.com), **só no servidor**. Já configurada no Vercel.
+- `ANTHROPIC_API_KEY`: opcional, Claude oficial (pago); tem prioridade se existir.
 - `VITE_GENERATOR_ENDPOINT`: outro endpoint de geração (opcional).
 
 ## Deploy
