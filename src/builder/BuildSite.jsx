@@ -5,6 +5,7 @@ import ImageEditor from './ImageEditor.jsx'
 import { BLOCKS, BLOCK_ORDER, SHAPES, MATERIALS } from '../data/blocks.js'
 import { THEMES, FONTS } from '../data/templates.js'
 import { FLAGS, computeScope } from '../lib/scope.js'
+import { parseVideo } from '../lib/video.js'
 
 const FLAG_ICON = { payments: 'pay', database: 'db', auth: 'lock', admin: 'panel', notifications: 'bell', integrations: 'plug', reports: 'chart', '3d': 'cube', mobile: 'phone', storage: 'image' }
 const GROUPS = { A: 'Estrutura', B: 'Conteúdo e vendas', C: 'Confiança', D: 'Extras e contato' }
@@ -247,6 +248,20 @@ function PieceTab({ block, dispatch }) {
               )}
             </label>
           ))}
+        </Group>
+      )}
+
+      {(block.type === 'video' || (block.type === 'hero' && p.layout !== '3d' && p.layout !== 'center')) && (
+        <Group title={block.type === 'hero' ? 'Vídeo de fundo' : 'Vídeo'} open={block.type === 'video' || !!p.video}>
+          <label className="b-field">
+            <span className="b-label">Link do vídeo</span>
+            <input className="field is-sm" value={p.video || ''} placeholder="youtube.com/watch?v=… ou arquivo .mp4" onChange={(e) => set({ video: e.target.value.trim() })} />
+          </label>
+          {p.video && !parseVideo(p.video) && <small className="b-hint is-warn">Não reconheci esse link. Use YouTube, Vimeo ou um endereço terminando em .mp4/.webm.</small>}
+          <small className="b-hint">
+            {block.type === 'hero' ? 'Na capa o vídeo toca sem som, em loop, no lugar da imagem. A imagem continua como capa enquanto o vídeo carrega.' : 'Aparece com os controles do player. O cliente pode enviar o vídeo para a Prime Page hospedar.'}
+          </small>
+          {p.video && <button className="b-link" onClick={() => set({ video: '' })}>Remover vídeo</button>}
         </Group>
       )}
 

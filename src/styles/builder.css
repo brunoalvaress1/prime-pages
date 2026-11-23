@@ -403,3 +403,4 @@ input[type='checkbox'] { accent-color: var(--mold); }
   .b-parts { max-height: 34vh; box-shadow: 0 1px 0 var(--line); }
 }
 @media (max-width: 1180px) { .b-name { display: none; } }
+.b-hint.is-warn { color: var(--call); }

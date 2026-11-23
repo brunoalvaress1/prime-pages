@@ -89,10 +89,11 @@ function fromTemplate(tplId, themeKey) {
 
 // ---- spec do servidor → peças do construtor ----
 const ITEM_TYPES = ['services', 'stats', 'products', 'menu', 'pricing', 'steps', 'team', 'testimonials', 'faq']
-const LAYOUT_OK = { hero: ['split', 'full', 'center', 'editorial', '3d'], about: ['split', 'reverse', 'stacked'], services: ['cards', 'list', 'images'], gallery: ['grid', 'bento', 'strip'] }
+const LAYOUT_OK = { video: ['wide', 'split'], hero: ['split', 'full', 'center', 'editorial', '3d'], about: ['split', 'reverse', 'stacked'], services: ['cards', 'list', 'images'], gallery: ['grid', 'bento', 'strip'] }
 
-export function specToProject(spec, images = []) {
+export function specToProject(spec, images = [], videos = []) {
   const pic = (i) => (Number.isInteger(i) && i >= 0 && images[i] ? images[i] : '')
+  const vid = (i) => (Number.isInteger(i) && i >= 0 && videos[i] ? videos[i] : null)
   const f3 = spec.float3d && spec.float3d.shape && spec.float3d.shape !== 'none' ? spec.float3d : null
   const blocks = []
   for (const s of spec.sections || []) {
@@ -100,7 +101,11 @@ export function specToProject(spec, images = []) {
     const p = {}
     for (const k of ['title', 'subtitle', 'text', 'cta']) if (s[k]) p[k] = s[k]
     p.kicker = s.kicker || ''
-    if (s.type === 'hero') p.cta2 = s.cta2 || ''
+    if (s.type === 'hero') {
+      p.cta2 = s.cta2 || ''
+      p.subtitle = s.subtitle || '' // sem o texto de exemplo do modelo
+    }
+    if (s.type === 'about' && !p.text) p.text = s.subtitle || ''
     if (LAYOUT_OK[s.type]?.includes(s.layout)) p.layout = s.layout
     if (pic(s.image)) p.image = pic(s.image)
     if (s.type === 'about' && pic(s.image2)) {
@@ -123,6 +128,14 @@ export function specToProject(spec, images = []) {
       if (p.layout === '3d') Object.assign(p, { shape: f3.shape, color: f3.color })
       else p.float3d = { shape: f3.shape, material: f3.material, color: f3.color, pos: 'right' }
     }
+    const v = vid(s.video)
+    if (v && (s.type === 'hero' || s.type === 'video')) {
+      p.video = v.url
+      if (s.type === 'video' && v.poster) p.poster = v.poster
+      if (s.type === 'hero' && !p.image && v.poster) p.image = v.poster
+      if (s.type === 'hero' && !['full', 'split', 'editorial'].includes(p.layout)) p.layout = 'full'
+    }
+    if (s.type === 'video' && !p.video) continue // seção de vídeo sem vídeo não serve
     if (s.type === 'hero' && p.layout === 'full' && p.image) p.media = { image: { overlay: 40 } }
     p.style = { bg: s.bg || 'auto', align: s.align || 'left', ...(s.type === 'hero' ? { pad: 'l' } : {}) }
     blocks.push(makeBlock(s.type, p))
@@ -132,7 +145,7 @@ export function specToProject(spec, images = []) {
   const theme = { ...THEMES.prime, ...t, name: 'Do site', radius: Number.isFinite(t.radius) ? t.radius : 12 }
   return { name: spec.name || 'Meu site', themeKey: 'custom', theme, blocks }
 }
-const BLOCKS_OK = new Set(['hero', 'marquee', 'about', 'services', 'stats', 'gallery', 'products', 'menu', 'booking', 'pricing', 'steps', 'team', 'testimonials', 'faq', 'blog', 'login', 'model3d', 'cta', 'map', 'contact', 'footer'])
+const BLOCKS_OK = new Set(['hero', 'marquee', 'about', 'services', 'stats', 'gallery', 'products', 'menu', 'booking', 'pricing', 'steps', 'team', 'testimonials', 'faq', 'blog', 'login', 'model3d', 'video', 'cta', 'map', 'contact', 'footer'])
 
 async function callServer(body, onStep, steps) {
   let i = 0
@@ -171,7 +184,7 @@ export async function analyzeUrl(raw, onStep) {
     'Quase lá…',
   ])
   if (r?.spec) {
-    const proj = specToProject(r.spec, r.images)
+    const proj = specToProject(r.spec, r.images, r.videos)
     onStep?.(`Pronto: ${proj.blocks.length} seções montadas`)
     return { ...proj, analysis: { ...r.meta, host: url.hostname, summary: r.spec.summary, sections: proj.blocks.map((b) => b.type), palette: [proj.theme.bg, proj.theme.surface, proj.theme.accent, proj.theme.text], font: proj.theme.headingFont } }
   }

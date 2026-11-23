@@ -4,6 +4,7 @@ import { BLOCKS } from '../data/blocks.js'
 import { imageCss } from './imageStyle.js'
 import { ensureFonts } from '../lib/fonts.js'
 import InView from '../components/InView.jsx'
+import { parseVideo, embedUrl } from '../lib/video.js'
 
 const Scene3D = lazy(() => import('../components/Scene3D.jsx'))
 
@@ -181,6 +182,27 @@ function Items({ block, edit, render }) {
   return block.props.items.map((it, i) => render(it, (patch) => set(i, patch), i))
 }
 
+// Vídeo do site: arquivo, YouTube ou Vimeo. "background" = capa (mudo, em loop, sem controles).
+// Em miniaturas/exportação estática (no3d) mostra só a capa do vídeo.
+function Video({ url, poster, className = '', background }) {
+  const { no3d } = useContext(Ctx)
+  const v = parseVideo(url)
+  if (!v) return null
+  const thumb = poster || v.thumb
+  if (no3d) return <div className={`${className} cs-video is-static`} style={thumb ? { backgroundImage: `url(${thumb})` } : undefined}><span className="cs-video-play" aria-hidden="true" /></div>
+  if (v.kind === 'file')
+    return (
+      <div className={`${className} cs-video`}>
+        <video src={v.url} poster={thumb || undefined} autoPlay={background} muted={background} loop={background} playsInline controls={!background} preload="metadata" />
+      </div>
+    )
+  return (
+    <div className={`${className} cs-video ${background ? 'is-bg' : ''}`}>
+      <iframe src={embedUrl(v, background)} title="Vídeo" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen tabIndex={background ? -1 : 0} />
+    </div>
+  )
+}
+
 function Three({ p, accent, className, interactive = true }) {
   if (useContext(Ctx).no3d) return <div className={className + " cs-3d-static"} aria-hidden="true"><span style={{ background: p.color || accent }} /></div>
   return (
@@ -210,7 +232,7 @@ function Section({ block, edit, theme }) {
       const L = p.layout || 'split'
       return (
         <header className={`cs-hero is-${L}`}>
-          {L === 'full' && <Img block={block} path="image" className="cs-hero-bg" label="Imagem de fundo" />}
+          {L === 'full' && (p.video ? <Video url={p.video} poster={p.image} className="cs-hero-bg" background /> : <Img block={block} path="image" className="cs-hero-bg" label="Imagem de fundo" />)}
           {L === '3d' && <Three p={p} accent={theme.accent} className="cs-hero-3d" />}
           <div className="cs-hero-copy">
             {p.kicker ? t('kicker', 'span', 'cs-kicker') : null}
@@ -218,9 +240,21 @@ function Section({ block, edit, theme }) {
             {t('subtitle', 'p', 'cs-lead', true)}
             {btns}
           </div>
-          {(L === 'split' || L === 'editorial') && <Img block={block} path="image" className="cs-hero-img" />}
+          {(L === 'split' || L === 'editorial') && (p.video ? <Video url={p.video} poster={p.image} className="cs-hero-img" background /> : <Img block={block} path="image" className="cs-hero-img" />)}
           {p.float3d && L !== '3d' && <Three p={p.float3d} accent={theme.accent} className={`cs-float3d at-${p.float3d.pos || 'right'}`} interactive={false} />}
         </header>
+      )
+    }
+    case 'video': {
+      const L = p.layout || 'wide'
+      return (
+        <section className={`cs-videosec is-${L}`}>
+          <div className="cs-videosec-copy">
+            {t('title', 'h2', 'cs-h2')}
+            {p.text || isLive ? t('text', 'p', 'cs-p', true) : null}
+          </div>
+          {p.video ? <Video url={p.video} poster={p.poster} className="cs-videosec-player" /> : <div className="cs-videosec-player cs-video is-empty"><span>Cole o link do vídeo no painel (YouTube, Vimeo ou .mp4)</span></div>}
+        </section>
       )
     }
     case 'marquee':

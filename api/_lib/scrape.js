@@ -108,6 +108,17 @@ function fonts(css, html) {
   return { google, declared: Object.entries(fams).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([f]) => f) }
 }
 
+// ---------- vídeo: arquivo, YouTube ou Vimeo ----------
+export function videoInfo(u) {
+  if (!u) return null
+  const yt = u.match(/(?:youtube(?:-nocookie)?\.com\/(?:embed\/|watch\?v=|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/)
+  if (yt) return { kind: 'youtube', url: 'https://www.youtube.com/watch?v=' + yt[1], poster: `https://i.ytimg.com/vi/${yt[1]}/hqdefault.jpg` }
+  const vm = u.match(/vimeo\.com\/(?:video\/)?(\d+)/)
+  if (vm) return { kind: 'vimeo', url: 'https://vimeo.com/' + vm[1] }
+  if (/\.(mp4|webm|m4v|mov)(\?|#|$)/i.test(u)) return { kind: 'file', url: u.replace(/^http:/, 'https:') }
+  return null
+}
+
 // ---------- HTML ----------
 function digestHtml(html, base, cssText) {
   const root = parse(html, { comment: false, blockTextElements: { script: false, style: true, noscript: false, pre: true } })
@@ -121,6 +132,34 @@ function digestHtml(html, base, cssText) {
 
   const logoEl = root.querySelectorAll('img').find((i) => /logo/i.test((i.getAttribute('class') || '') + (i.getAttribute('alt') || '') + (i.getAttribute('src') || '') + (i.getAttribute('id') || '')))
   const logo = abs(logoEl?.getAttribute('src'), base) || abs(root.querySelector('link[rel="apple-touch-icon"]')?.getAttribute('href'), base) || abs(root.querySelector('link[rel~="icon"]')?.getAttribute('href'), base)
+
+  // ---------- vídeos ----------
+  const videos = []
+  const addVideo = (raw, extra = {}) => {
+    const u = abs(raw, base)
+    if (!u) return -1
+    const v = videoInfo(u)
+    if (!v) return -1
+    const at = videos.findIndex((x) => x.url === v.url)
+    if (at >= 0) return at
+    videos.push({ ...v, autoplay: !!extra.autoplay, poster: extra.poster || v.poster || '' })
+    return videos.length - 1
+  }
+  const videoSrc = (el) => {
+    if (el.tagName === 'IFRAME') return el.getAttribute('src') || el.getAttribute('data-src') || ''
+    const srcs = [el.getAttribute('src'), el.getAttribute('data-src'), ...el.querySelectorAll('source').flatMap((s) => [s.getAttribute('src'), s.getAttribute('data-src')])].filter(Boolean)
+    // prefere mp4 (toca em todos os navegadores)
+    return srcs.find((s) => /\.mp4/i.test(s)) || srcs[0] || ''
+  }
+  const VIDEO_SEL = 'video, iframe[src*="youtube"], iframe[src*="youtu.be"], iframe[src*="vimeo"], iframe[data-src*="youtube"], iframe[data-src*="vimeo"]'
+  for (const el of root.querySelectorAll(VIDEO_SEL)) {
+    const isTag = el.tagName === 'VIDEO'
+    addVideo(videoSrc(el), isTag ? { poster: abs(el.getAttribute('poster') || el.getAttribute('data-poster'), base), autoplay: el.hasAttribute('autoplay') || (el.hasAttribute('muted') && el.hasAttribute('loop')) } : {})
+  }
+  addVideo(meta('meta[property="og:video"]') || meta('meta[property="og:video:url"]') || meta('meta[property="og:video:secure_url"]'))
+  // vídeos citados só no código (players em JS, JSON embutido)
+  for (const m of html.matchAll(/https?:\\?\/\\?\/[^"'\s)<>]+?\.(?:mp4|webm)(?:\?[^"'\s)<>]*)?/gi)) if (videos.length < 8) addVideo(m[0].replace(/\\\//g, '/'), { autoplay: true })
+  for (const m of html.matchAll(/(?:youtube(?:-nocookie)?\.com\/(?:embed\/|watch\?v=)|youtu\.be\/)([\w-]{11})/g)) if (videos.length < 8) addVideo('https://www.youtube.com/watch?v=' + m[1])
 
   root.querySelectorAll('script,style,noscript,svg,template,iframe[src*="googletagmanager"]').forEach((n) => n.remove())
 
@@ -164,7 +203,9 @@ function digestHtml(html, base, cssText) {
     const imgCount = el.querySelectorAll('img').length
     const tag = el.tagName.toLowerCase()
     const cls = (el.getAttribute('class') || '').slice(0, 60)
-    sections.push({ tag, cls, heading: heading.slice(0, 120), paras: paras.map((p) => p.slice(0, 280)), items, buttons, prices, imgCount, hasForm: !!el.querySelector('form'), hasVideo: !!el.querySelector('video'), hasMap: /maps\.google|google\.com\/maps/.test(el.toString()) })
+    const vEl = el.querySelector(VIDEO_SEL)
+    const video = vEl ? videos.findIndex((v) => v.url === videoInfo(abs(videoSrc(vEl), base))?.url) : -1
+    sections.push({ tag, cls, heading: heading.slice(0, 120), paras: paras.map((p) => p.slice(0, 280)), items, buttons, prices, imgCount, hasForm: !!el.querySelector('form'), hasVideo: !!vEl, video, hasMap: /maps\.google|google\.com\/maps/.test(el.toString()) })
     if (sections.length >= 18) break
   }
 
@@ -204,6 +245,7 @@ function digestHtml(html, base, cssText) {
     ctas,
     sections,
     images,
+    videos: videos.slice(0, 8),
     features,
     contact,
     colors: { ...palette(allCss), body: bodyBg(cssText), theme: themeColor },
@@ -225,7 +267,8 @@ function digestMarkdown(raw, base) {
   const headings = lines.filter((l) => /^#{1,3}\s/.test(l)).map((l) => ({ l: 'h' + l.match(/^#+/)[0].length, t: clean(l.replace(/^#+/, '')).slice(0, 120) })).slice(0, 40)
   const paragraphs = uniq(lines.map((l) => clean(l.replace(/!?\[[^\]]*\]\([^)]*\)/g, ''))).filter((l) => l.length > 50 && !/^(Title|URL Source|Markdown Content|Warning):/.test(l))).slice(0, 25).map((p) => p.slice(0, 300))
   const images = imgList.filter((u) => u && !JUNK_IMG.test(u)).slice(0, 40).map((url) => ({ url, alt: '' }))
-  return { title: clean(title), description: '', siteName: '', lang: '', themeColor: '', logo: '', nav: [], headings, paragraphs, ctas: [], sections: [], images, features: {}, contact: {}, colors: { top: [], accents: [], neutrals: [], body: '', theme: '' }, fonts: { google: [], declared: [] } }
+  const videos = uniq([...raw.matchAll(/https?:\/\/[^\s)"']+/g)].map((m) => videoInfo(m[0])?.url)).slice(0, 6).map((url) => ({ ...videoInfo(url), autoplay: false }))
+  return { title: clean(title), description: '', siteName: '', lang: '', themeColor: '', logo: '', nav: [], headings, paragraphs, ctas: [], sections: [], images, videos, features: {}, contact: {}, colors: { top: [], accents: [], neutrals: [], body: '', theme: '' }, fonts: { google: [], declared: [] } }
 }
 
 function isBlocked(r) {

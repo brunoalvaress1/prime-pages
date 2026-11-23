@@ -47,14 +47,14 @@ export async function run({ mode, input }) {
       const q = facts?.title || scan.digest?.siteName || scan.host.split('.')[0]
       const pics = await openImages(q, 10)
       const imgs = [...(facts?.image ? [{ url: facts.image, alt: facts.title }] : []), ...pics]
-      if (!scan.digest) scan.digest = { title: facts?.title || '', description: facts?.summary || '', siteName: facts?.title || '', lang: '', themeColor: '', logo: '', nav: [], headings: [], paragraphs: facts?.summary ? [facts.summary] : [], ctas: [], sections: [], images: [], features: {}, contact: {}, colors: { top: [], accents: [], neutrals: [], body: '', theme: '' }, fonts: { google: [], declared: [] } }
+      if (!scan.digest) scan.digest = { title: facts?.title || '', description: facts?.summary || '', siteName: facts?.title || '', lang: '', themeColor: '', logo: '', nav: [], headings: [], paragraphs: facts?.summary ? [facts.summary] : [], ctas: [], sections: [], images: [], videos: [], features: {}, contact: {}, colors: { top: [], accents: [], neutrals: [], body: '', theme: '' }, fonts: { google: [], declared: [] } }
       scan.digest.images.push(...imgs.map((i) => ({ url: i.url, alt: i.alt, credit: i.credit })))
       extra = facts
     }
     const r = await tryAI(provider, { mode, input: url.href, scan, extra })
     const ai = !!r.spec
     const spec = r.spec || heuristicSpec(scan, extra)
-    return { spec, images: scan.digest.images.map((i) => i.url), meta: { ai, provider: ai ? PROVIDER_LABEL[provider] : null, aiError: r.error, source: scan.source, host: scan.host, read: { headings: scan.digest.headings.length, images: scan.digest.images.length, colors: scan.digest.colors.top?.slice(0, 6) || [], fonts: [...(scan.digest.fonts.google || []), ...(scan.digest.fonts.declared || [])].slice(0, 3) } } }
+    return { spec, images: scan.digest.images.map((i) => i.url), videos: (scan.digest.videos || []).map((v) => ({ url: v.url, poster: v.poster || '' })), meta: { ai, provider: ai ? PROVIDER_LABEL[provider] : null, aiError: r.error, source: scan.source, host: scan.host, read: { headings: scan.digest.headings.length, images: scan.digest.images.length, videos: (scan.digest.videos || []).length, colors: scan.digest.colors.top?.slice(0, 6) || [], fonts: [...(scan.digest.fonts.google || []), ...(scan.digest.fonts.declared || [])].slice(0, 3) } } }
   }
 
   const text = String(input || '').trim()

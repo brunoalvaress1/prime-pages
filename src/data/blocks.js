@@ -25,6 +25,7 @@ export const BLOCKS = {
       cta: 'Fale com a gente',
       cta2: '',
       image: '',
+      video: '',
       shape: 'knot',
       color: '',
     },
@@ -159,6 +160,17 @@ export const BLOCKS = {
         { title: 'Resolvemos', text: 'Com prazo e preço combinados.' },
       ],
     },
+  },
+  video: {
+    label: 'Vídeo',
+    part: 'B7',
+    hint: 'Vídeo do YouTube, Vimeo ou arquivo .mp4.',
+    needs: [],
+    layouts: [
+      ['wide', 'Largo'],
+      ['split', 'Com texto ao lado'],
+    ],
+    defaults: { layout: 'wide', title: 'Veja como é', text: '', video: '', poster: '' },
   },
   team: {
     label: 'Equipe',
