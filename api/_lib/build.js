@@ -3,7 +3,7 @@
 // um montador por regras usa os dados reais extraídos.
 import Anthropic from '@anthropic-ai/sdk'
 
-export const BLOCK_TYPES = ['hero', 'marquee', 'about', 'services', 'stats', 'gallery', 'products', 'menu', 'booking', 'pricing', 'steps', 'team', 'testimonials', 'faq', 'blog', 'login', 'model3d', 'video', 'cta', 'map', 'contact', 'footer']
+export const BLOCK_TYPES = ['hero', 'marquee', 'about', 'services', 'stats', 'gallery', 'products', 'menu', 'booking', 'pricing', 'steps', 'team', 'testimonials', 'faq', 'blog', 'login', 'model3d', 'video', 'carousel', 'cta', 'map', 'contact', 'footer']
 const SHAPES = ['none', 'knot', 'sphere', 'gem', 'capsule', 'rings', 'cluster', 'gear', 'wineglass', 'bottle', 'dumbbell', 'bag', 'house', 'box', 'torus', 'phone']
 const FONTS = ['Manrope', 'DM Sans', 'Archivo', 'Space Grotesk', 'Bricolage Grotesque', 'Syne', 'Unbounded', 'Fraunces', 'Playfair Display', 'Cormorant Garamond', 'Inter', 'Montserrat', 'Poppins', 'Oswald', 'Bebas Neue', 'Lora', 'Libre Baskerville', 'Raleway', 'Work Sans', 'Outfit']
 
@@ -51,7 +51,7 @@ export const SPEC_SCHEMA = obj({
   },
 })
 
-const LAYOUTS = 'hero: split | full | center | editorial | 3d. about: split | reverse | stacked. services: cards | list | images. gallery: grid | bento | strip. video: wide | split. Outros tipos: deixe layout vazio.'
+const LAYOUTS = 'hero: split | full | center | editorial | 3d. about: split | reverse | stacked. services: cards | list | images | feature (linhas grandes com foto em zigue-zague) | bento (mosaico com texto sobre a foto). gallery: grid | bento | strip | marquee (duas faixas de fotos passando). carousel: coverflow | 3d | slider. video: wide | split. Outros tipos: deixe layout vazio.'
 
 const SYSTEM = `Você é o diretor de arte e redator da Prime Page, uma agência de sites de Leme-SP.
 Seu trabalho: transformar a leitura de um site de referência (ou o pedido em texto de um cliente) em um site editável montado com as peças do nosso construtor.
@@ -68,9 +68,9 @@ Regras:
 - Se o site bloqueou a leitura automática, use o que você sabe sobre a marca e o que a pesquisa trouxer. Nunca invente que leu algo que não leu: diga no "summary" de onde veio cada parte.
 - Imagens: use apenas índices da lista "images" fornecida (0 = primeira). Escolha a imagem certa para cada lugar pelo texto alternativo e pela URL (fotos grandes de herói para a capa, produtos para cartões). Use -1 quando não houver imagem adequada. Não repita a mesma imagem em lugares vizinhos.
 - Vídeos: use apenas índices da lista "videos" (0 = primeiro) no campo "video" da seção; -1 quando não houver. Vídeo marcado [fundo] (autoplay, sem som) que aparece na capa: coloque no "hero" com layout "full" (a imagem da capa vira a capa do vídeo enquanto carrega). Vídeo do YouTube/Vimeo ou vídeo de apresentação no meio da página: crie uma seção "video" com título curto.
-- Monte de 7 a 12 seções. Sempre comece com "hero" e termine com "footer". Use as peças que o original realmente tem (loja com preço → products; reserva/agendamento → booking; cardápio → menu; login/área do cliente → login).
+- O site tem que PRENDER A ATENÇÃO do começo ao fim, não só na capa. Monte de 9 a 13 seções ricas em conteúdo e movimento, alternando o ritmo: depois da capa, intercale seções de impacto visual com seções de texto. Regras de conteúdo: (a) com 5 ou mais fotos, inclua pelo menos UM "carousel" (4 a 8 itens, cada um com image, title curto e text de uma frase; use coverflow ou 3d para produtos/ambientes, slider para fotos largas de impacto); (b) "services" (os destaques) sempre com foto em cada item quando houver fotos, preferindo layout feature ou bento, com 3 a 6 itens de título forte e texto de 1 a 2 frases; nunca cards só com título; (c) galeria extra em "marquee" ou "bento" com as fotos que sobrarem; (d) "stats" com números reais do site (anos, clientes, unidades) quando existirem; (e) "marquee" com frases curtas do negócio entre seções; (f) "testimonials" ou "faq" quando o original tiver. Use TODAS as boas imagens disponíveis sem repetir em seções vizinhas. Escreva um "text" de apoio curto nos títulos de seção. Sempre comece com "hero" e termine com "footer". Use as peças que o original realmente tem (loja com preço → products; reserva/agendamento → booking; cardápio → menu; login/área do cliente → login).
 - Layouts permitidos: ${LAYOUTS}
-- "items" só para services, stats, products, menu, pricing, steps, team, testimonials, faq (3 a 6 itens). Para os outros tipos, devolva lista vazia.
+- "items" só para services, stats, products, menu, pricing, steps, team, testimonials, faq, carousel (3 a 8 itens). Para os outros tipos, devolva lista vazia.
 - Cores em hexadecimal #rrggbb. "bg" de cada seção alterna o ritmo do original (ex.: faixas escuras e claras). radius em px (0 a 28).
 - "float3d": um objeto 3D que combine com o negócio (ex.: carro de luxo → gem ou rings em metal; restaurante → wineglass em vidro). Use "none" quando o original for sóbrio e não pedir 3D.
 - "imageQuery": 2 a 4 palavras em inglês para buscar fotos parecidas num banco de imagens abertas, caso faltem fotos.
@@ -354,7 +354,14 @@ export function heuristicSpec(scan, extra) {
     if (H.length > 4) push({ type: 'services', layout: 'cards', title: H[2], items: H.slice(3, 7).map((t, i) => ({ title: t, text: P[3 + i] || '', price: '', image: -1 })) })
   }
   if (extra?.summary && S.length < 3) push({ type: 'about', layout: 'split', title: `Sobre ${name}`, text: extra.summary, image: nextImg() })
-  if (d.images.length - img >= 4) push({ type: 'gallery', layout: 'bento', title: 'Galeria', images: Array.from({ length: Math.min(6, d.images.length - img) }, nextImg) })
+  // carrossel com as fotos que sobraram (legendas vêm dos títulos do site)
+  if (d.images.length - img >= 4) {
+    const caps = H.slice(1)
+    const n = Math.min(7, d.images.length - img)
+    S.splice(Math.min(2, S.length), 0, { ...blank, type: 'carousel', layout: 'coverflow', title: 'Destaques', items: Array.from({ length: n }, (_, k) => ({ title: caps[k] || `${name} ${k + 1}`, text: P[k + 1]?.slice(0, 110) || '', price: '', image: nextImg() })) })
+  }
+  if (d.images.length - img >= 4) push({ type: 'gallery', layout: 'marquee', title: 'Galeria', images: Array.from({ length: Math.min(8, d.images.length - img) }, nextImg) })
+  if (d.nav.length >= 3) S.splice(1, 0, { ...blank, type: 'marquee', text: d.nav.slice(0, 6).join(' · ') })
   if (d.features.booking && !S.some((s) => s.type === 'booking')) push({ type: 'booking', title: 'Agende agora', text: '' })
   if (d.features.login) push({ type: 'login', title: 'Área do cliente', text: 'Entre para ver pedidos e reservas.' })
   // vídeos: de fundo vai para a capa; YouTube/Vimeo ou apresentação vira seção de vídeo

@@ -88,14 +88,15 @@ function fromTemplate(tplId, themeKey) {
 }
 
 // ---- spec do servidor → peças do construtor ----
-const ITEM_TYPES = ['services', 'stats', 'products', 'menu', 'pricing', 'steps', 'team', 'testimonials', 'faq']
-const LAYOUT_OK = { video: ['wide', 'split'], hero: ['split', 'full', 'center', 'editorial', '3d'], about: ['split', 'reverse', 'stacked'], services: ['cards', 'list', 'images'], gallery: ['grid', 'bento', 'strip'] }
+const ITEM_TYPES = ['services', 'stats', 'products', 'menu', 'pricing', 'steps', 'team', 'testimonials', 'faq', 'carousel']
+const LAYOUT_OK = { video: ['wide', 'split'], carousel: ['coverflow', '3d', 'slider'], hero: ['split', 'full', 'center', 'editorial', '3d'], about: ['split', 'reverse', 'stacked'], services: ['cards', 'list', 'images', 'feature', 'bento'], gallery: ['grid', 'bento', 'strip', 'marquee'] }
 
-export function specToProject(spec, images = [], videos = []) {
+export function specToProject(spec, images = [], videos = [], contact = {}) {
   const pic = (i) => (Number.isInteger(i) && i >= 0 && images[i] ? images[i] : '')
   const vid = (i) => (Number.isInteger(i) && i >= 0 && videos[i] ? videos[i] : null)
   const f3 = spec.float3d && spec.float3d.shape && spec.float3d.shape !== 'none' ? spec.float3d : null
   const blocks = []
+  const usedVideos = new Set()
   for (const s of spec.sections || []) {
     if (!BLOCKS_OK.has(s.type)) continue
     const p = {}
@@ -106,6 +107,8 @@ export function specToProject(spec, images = [], videos = []) {
       p.subtitle = s.subtitle || '' // sem o texto de exemplo do modelo
     }
     if (s.type === 'about' && !p.text) p.text = s.subtitle || ''
+    if (['services', 'carousel'].includes(s.type)) p.text = s.text || s.subtitle || ''
+    if (s.type === 'footer') Object.assign(p, { about: (blocks.find((b) => b.type === 'about')?.props.text || blocks.find((b) => b.type === 'hero')?.props.subtitle || '').slice(0, 180), phone: contact.phone || '', email: contact.email || '', address: contact.address || '' })
     if (LAYOUT_OK[s.type]?.includes(s.layout)) p.layout = s.layout
     if (pic(s.image)) p.image = pic(s.image)
     if (s.type === 'about' && pic(s.image2)) {
@@ -120,7 +123,7 @@ export function specToProject(spec, images = [], videos = []) {
       p.items = s.items.slice(0, 8).map((it) => {
         const o = { title: it.title || '', text: it.text || '' }
         if (['products', 'menu', 'pricing'].includes(s.type)) o.price = it.price || ''
-        if (['services', 'products', 'team'].includes(s.type)) o.image = pic(it.image)
+        if (['services', 'products', 'team', 'carousel'].includes(s.type)) o.image = pic(it.image)
         return o
       })
     }
@@ -128,7 +131,9 @@ export function specToProject(spec, images = [], videos = []) {
       if (p.layout === '3d') Object.assign(p, { shape: f3.shape, color: f3.color })
       else p.float3d = { shape: f3.shape, material: f3.material, color: f3.color, pos: 'right' }
     }
-    const v = vid(s.video)
+    let v = vid(s.video)
+    if (v && usedVideos.has(v.url)) v = null // o mesmo vídeo não aparece duas vezes
+    if (v) usedVideos.add(v.url)
     if (v && (s.type === 'hero' || s.type === 'video')) {
       p.video = v.url
       if (s.type === 'video' && v.poster) p.poster = v.poster
@@ -140,7 +145,7 @@ export function specToProject(spec, images = [], videos = []) {
     p.style = { bg: s.bg || 'auto', align: s.align || 'left', ...(s.type === 'hero' ? { pad: 'l' } : {}) }
     blocks.push(makeBlock(s.type, p))
   }
-  if (!blocks.some((b) => b.type === 'footer')) blocks.push(makeBlock('footer', { text: `© ${spec.name}` }))
+  if (!blocks.some((b) => b.type === 'footer')) blocks.push(makeBlock('footer', { text: `© ${spec.name}`, phone: contact.phone || '', email: contact.email || '', address: contact.address || '' }))
   const t = spec.theme || {}
   const theme = { ...THEMES.prime, ...t, name: 'Do site', radius: Number.isFinite(t.radius) ? t.radius : 12 }
   return { name: spec.name || 'Meu site', themeKey: 'custom', theme, blocks }
@@ -184,7 +189,7 @@ export async function analyzeUrl(raw, onStep) {
     'Quase lá…',
   ])
   if (r?.spec) {
-    const proj = specToProject(r.spec, r.images, r.videos)
+    const proj = specToProject(r.spec, r.images, r.videos, r.contact)
     onStep?.(`Pronto: ${proj.blocks.length} seções montadas`)
     return { ...proj, analysis: { ...r.meta, host: url.hostname, summary: r.spec.summary, sections: proj.blocks.map((b) => b.type), palette: [proj.theme.bg, proj.theme.surface, proj.theme.accent, proj.theme.text], font: proj.theme.headingFont } }
   }

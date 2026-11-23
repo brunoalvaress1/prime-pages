@@ -1,4 +1,4 @@
-import { createContext, lazy, Suspense, useContext, useRef } from 'react'
+import { createContext, lazy, Suspense, useContext, useEffect, useRef, useState } from 'react'
 import Icon from '../components/Icon.jsx'
 import { BLOCKS } from '../data/blocks.js'
 import { imageCss } from './imageStyle.js'
@@ -182,6 +182,202 @@ function Items({ block, edit, render }) {
   return block.props.items.map((it, i) => render(it, (patch) => set(i, patch), i))
 }
 
+// ---------- Carrossel de fotos: 3D (anel), coverflow ou slider grande ----------
+function Carousel({ block, edit }) {
+  const { editing, no3d, selImg } = useContext(Ctx)
+  const p = block.props
+  const items = p.items || []
+  const n = items.length
+  const L = p.layout || 'coverflow'
+  const [idx, setIdx] = useState(0)
+  const [hover, setHover] = useState(false)
+  const drag = useRef(null)
+  const editingThis = editing && selImg?.blockId === block.id
+  const go = (d) => setIdx((i) => (i + d + n * 100) % n)
+
+  // gira sozinho; pausa com o mouse em cima ou enquanto edita uma foto dele
+  useEffect(() => {
+    if (no3d || hover || editingThis || n < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const t = setTimeout(() => go(1), L === 'slider' ? 4200 : 3200)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idx, hover, editingThis, n, no3d, L])
+
+  if (!n) return null
+  const set = (i, patch) => edit({ items: items.map((it, j) => (j === i ? { ...it, ...patch } : it)) })
+  const cur = items[idx] || items[0]
+  const rel = (i) => {
+    let r = i - idx
+    if (r > n / 2) r -= n
+    if (r < -n / 2) r += n
+    return r
+  }
+  const step = 360 / n
+
+  const pointer = {
+    onPointerDown: (e) => (drag.current = { x: e.clientX }),
+    onPointerUp: (e) => {
+      const d = drag.current
+      drag.current = null
+      if (d && Math.abs(e.clientX - d.x) > 40) go(e.clientX < d.x ? 1 : -1)
+    },
+  }
+
+  return (
+    <div className={`cs-car is-${L}`} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+      <div className="cs-car-stage" {...pointer}>
+        {L === '3d' && (
+          <div className="cs-car-ring" style={{ '--n': n, transform: `translateZ(calc(var(--r) * -1)) rotateX(-7deg) rotateY(${-idx * step}deg)` }}>
+            {items.map((it, i) => (
+              <div key={i} className={`cs-car-card ${i === idx ? 'is-on' : ''}`} style={{ transform: `rotateY(${i * step}deg) translateZ(var(--r))` }} onClick={() => i !== idx && setIdx(i)}>
+                <Img block={block} path={`items.${i}.image`} />
+              </div>
+            ))}
+          </div>
+        )}
+        {L === 'coverflow' &&
+          items.map((it, i) => {
+            const r = rel(i)
+            const a = Math.abs(r)
+            return (
+              <div
+                key={i}
+                className={`cs-car-card ${r === 0 ? 'is-on' : ''}`}
+                style={{ transform: `translateX(${r * 62}%) translateZ(${-a * 140}px) rotateY(${-Math.sign(r) * Math.min(a, 2) * 28}deg) scale(${1 - Math.min(a, 3) * 0.08})`, zIndex: 20 - a, opacity: a > 2 ? 0 : 1 - a * 0.18 }}
+                onClick={() => r !== 0 && setIdx(i)}
+              >
+                <Img block={block} path={`items.${i}.image`} />
+              </div>
+            )
+          })}
+        {L === 'slider' && (
+          <div className="cs-car-track" style={{ transform: `translateX(${-idx * 100}%)` }}>
+            {items.map((it, i) => (
+              <div key={i} className={`cs-car-slide ${i === idx ? 'is-on' : ''}`}>
+                <Img block={block} path={`items.${i}.image`} />
+                <div className="cs-car-cap">
+                  <T as="h3" className="cs-h3" value={it.title} onChange={(v) => set(i, { title: v })} />
+                  <T as="p" className="cs-p" value={it.text} multiline onChange={(v) => set(i, { text: v })} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {L !== 'slider' && (
+        <div className="cs-car-info" key={idx}>
+          <T as="h3" className="cs-h3" value={cur.title} onChange={(v) => set(idx, { title: v })} />
+          <T as="p" className="cs-p" value={cur.text} multiline onChange={(v) => set(idx, { text: v })} />
+        </div>
+      )}
+      <div className="cs-car-nav">
+        <button type="button" className="cs-car-arrow" aria-label="Anterior" onClick={(e) => { e.stopPropagation(); go(-1) }}><Icon name="back" size={18} /></button>
+        <div className="cs-car-dots">
+          {items.map((_, i) => <button type="button" key={i} className={i === idx ? 'is-on' : ''} aria-label={`Foto ${i + 1}`} onClick={(e) => { e.stopPropagation(); setIdx(i) }} />)}
+        </div>
+        <button type="button" className="cs-car-arrow" aria-label="Próxima" onClick={(e) => { e.stopPropagation(); go(1) }}><Icon name="arrow" size={18} /></button>
+      </div>
+      {!hover && !editingThis && !no3d && <span className="cs-car-timer" key={'t' + idx} style={{ animationDuration: L === 'slider' ? '4.2s' : '3.2s' }} />}
+    </div>
+  )
+}
+
+// ---------- Rodapé completo: marca, navegação, contato, chamada e assinatura gigante ----------
+function Footer({ block, t }) {
+  const { project, onAction, editing } = useContext(Ctx)
+  const p = block.props
+  const name = project?.name || ''
+  const blocks = project?.blocks || []
+  const nav = blocks.filter((b) => !['hero', 'footer', 'marquee', 'stats', 'cta'].includes(b.type) && b.props.title).slice(0, 6)
+  const map = blocks.find((b) => b.type === 'map')
+  const contact = blocks.find((b) => b.type === 'contact')
+  const hero = blocks.find((b) => b.type === 'hero')
+  const address = p.address || map?.props.address || ''
+  const hours = p.hours || map?.props.hours || ''
+  const phone = p.phone || contact?.props.whatsapp || ''
+  const has = (k) => typeof p[k] === 'string'
+  const link = (b) =>
+    onAction ? (
+      <button type="button" key={b.id} onClick={() => onAction('scroll', b.id)}>{b.props.title}</button>
+    ) : (
+      <span key={b.id}>{b.props.title}</span>
+    )
+  return (
+    <footer className="cs-footer">
+      <div className="cs-f-top">
+        <div className="cs-f-brand">
+          <strong className="cs-f-name">{name}</strong>
+          {has('about') && (p.about || editing) ? t('about', 'p', 'cs-f-about', true) : null}
+          <div className="cs-f-social">
+            {(p.instagram || editing) && <span title={p.instagram || 'Instagram'}><Icon name="instagram" size={18} /></span>}
+            {(phone || editing) && <span title={phone || 'WhatsApp'}><Icon name="whatsapp" size={18} /></span>}
+            {(p.email || editing) && <span title={p.email || 'E-mail'}><Icon name="mail" size={18} /></span>}
+          </div>
+        </div>
+        {nav.length > 0 && (
+          <div className="cs-f-col">
+            <b>Navegação</b>
+            {nav.map(link)}
+          </div>
+        )}
+        <div className="cs-f-col">
+          <b>Contato</b>
+          {address && <span>{address}</span>}
+          {phone && <span>{phone}</span>}
+          {p.email && <span>{p.email}</span>}
+          {hours && <span>{hours}</span>}
+          {!address && !phone && !p.email && !hours && <span>{editing ? 'Preencha telefone, e-mail e endereço no painel.' : 'Fale com a gente pelo WhatsApp.'}</span>}
+        </div>
+        <div className="cs-f-cta">
+          <b>Vamos conversar?</b>
+          <Btn action="primary">{hero?.props.cta || 'Fale com a gente'}</Btn>
+        </div>
+      </div>
+      <div className="cs-f-word" aria-hidden="true"><span>{name}</span></div>
+      <div className="cs-f-bottom">
+        {p.text === BLOCKS.footer.defaults.text && !editing ? <p>© {new Date().getFullYear()} {name}. Todos os direitos reservados.</p> : t('text', 'p', '')}
+        <span>Feito com Prime Page</span>
+      </div>
+    </footer>
+  )
+}
+
+// Número que conta do zero quando aparece na tela (ex.: "1.200+", "4,9", "15 anos").
+function CountUp({ value }) {
+  const ref = useRef(null)
+  const m = String(value || '').match(/^(\D*?)(\d[\d.]*(?:,\d+)?)(.*)$/)
+  const [shown, setShown] = useState(m ? m[1] + '0' + m[3] : value)
+  useEffect(() => {
+    if (!m || !ref.current) return setShown(value)
+    const target = parseFloat(m[2].replace(/\./g, '').replace(',', '.'))
+    const dec = (m[2].split(',')[1] || '').length
+    const thousands = m[2].includes('.')
+    let raf
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return
+      io.disconnect()
+      const t0 = performance.now()
+      const tick = (t) => {
+        const k = Math.min(1, (t - t0) / 1600)
+        const v = target * (1 - Math.pow(1 - k, 3))
+        let s = dec ? v.toFixed(dec).replace('.', ',') : Math.round(v).toString()
+        if (thousands && !dec) s = Number(s).toLocaleString('pt-BR')
+        setShown(m[1] + s + m[3])
+        if (k < 1) raf = requestAnimationFrame(tick)
+      }
+      raf = requestAnimationFrame(tick)
+    })
+    io.observe(ref.current)
+    return () => {
+      io.disconnect()
+      cancelAnimationFrame(raf)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value])
+  return <strong ref={ref}>{shown}</strong>
+}
+
 // Vídeo do site: arquivo, YouTube ou Vimeo. "background" = capa (mudo, em loop, sem controles).
 // Em miniaturas/exportação estática (no3d) mostra só a capa do vídeo.
 function Video({ url, poster, className = '', background }) {
@@ -217,7 +413,7 @@ function Three({ p, accent, className, interactive = true }) {
 function Section({ block, edit, theme }) {
   const p = block.props
   const live = useLive(block)
-  const { onAction: liveAction, no3d: staticRender } = useContext(Ctx)
+  const { onAction: liveAction, no3d: staticRender, editing: editingAny } = useContext(Ctx)
   const isLive = !!liveAction
   const t = (key, as, cls, multiline) => <T as={as} className={cls} value={p[key]} multiline={multiline} onChange={(v) => edit({ [key]: v })} />
   const btns = (
@@ -282,20 +478,26 @@ function Section({ block, edit, theme }) {
       )
     case 'services': {
       const L = p.layout || 'cards'
+      const withImg = L === 'images' || L === 'feature' || L === 'bento' || (L === 'cards' && p.items.some((it) => it.image))
       return (
         <section className={`cs-list is-services is-${L}`}>
-          {t('title', 'h2', 'cs-h2')}
+          <div className="cs-sec-head">
+            {t('title', 'h2', 'cs-h2')}
+            {p.text || editingAny ? t('text', 'p', 'cs-p cs-sec-lead', true) : null}
+          </div>
           <div className="cs-grid">
             <Items
               block={block}
               edit={edit}
               render={(it, set, i) => (
-                <article key={i} className="cs-item" {...live('service', i)}>
-                  {L === 'images' && <Img block={block} path={`items.${i}.image`} />}
+                <article key={i} className="cs-item" style={{ '--i': i }} {...live('service', i)}>
+                  {withImg && <Img block={block} path={`items.${i}.image`} />}
                   {L === 'list' && <span className="cs-num">{String(i + 1).padStart(2, '0')}</span>}
-                  <div>
+                  {L === 'cards' && <span className="cs-badge" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>}
+                  <div className="cs-item-body">
                     <T as="h3" className="cs-h3" value={it.title} onChange={(v) => set({ title: v })} />
                     <T as="p" className="cs-p" value={it.text} multiline onChange={(v) => set({ text: v })} />
+                    {(L === 'cards' || L === 'feature' || L === 'bento') && <span className="cs-more" aria-hidden="true">Saiba mais <Icon name="arrow" size={14} /></span>}
                   </div>
                 </article>
               )}
@@ -312,7 +514,7 @@ function Section({ block, edit, theme }) {
             edit={edit}
             render={(it, set, i) => (
               <div key={i} className="cs-stat">
-                <T as="strong" value={it.title} onChange={(v) => set({ title: v })} />
+                {editingAny ? <T as="strong" value={it.title} onChange={(v) => set({ title: v })} /> : <CountUp value={it.title} />}
                 <T as="span" value={it.text} onChange={(v) => set({ text: v })} />
               </div>
             )}
@@ -369,9 +571,32 @@ function Section({ block, edit, theme }) {
       return (
         <section>
           {t('title', 'h2', 'cs-h2')}
-          <div className={`cs-gallery is-${p.layout || 'grid'}`}>
-            {p.images.map((_, i) => <Img key={i} block={block} path={`images.${i}`} />)}
+          {p.layout === 'marquee' ? (
+            <div className="cs-gmarq">
+              {[0, 1].map((row) => (
+                <div key={row} className={`cs-gmarq-row ${row ? 'is-rev' : ''}`}>
+                  <div className="cs-gmarq-track">
+                    {p.images.map((_, i) => <Img key={i} block={block} path={`images.${(i + row * 2) % p.images.length}`} />)}
+                    {p.images.map((src, i) => <div key={'d' + i} className="cs-img" aria-hidden="true"><div className="cs-img-clip">{p.images[(i + row * 2) % p.images.length] ? <img src={p.images[(i + row * 2) % p.images.length]} alt="" draggable={false} /> : null}</div></div>)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className={`cs-gallery is-${p.layout || 'grid'}`}>
+              {p.images.map((_, i) => <Img key={i} block={block} path={`images.${i}`} />)}
+            </div>
+          )}
+        </section>
+      )
+    case 'carousel':
+      return (
+        <section className="cs-carsec">
+          <div className="cs-carsec-head">
+            {t('title', 'h2', 'cs-h2')}
+            {p.text || editingAny ? t('text', 'p', 'cs-p', true) : null}
           </div>
+          <Carousel block={block} edit={edit} />
         </section>
       )
     case 'booking':
@@ -466,10 +691,44 @@ function Section({ block, edit, theme }) {
         </section>
       )
     case 'footer':
-      return <footer className="cs-footer">{t('text', 'p', '')}</footer>
+      return <Footer block={block} t={t} />
     default:
       return null
   }
+}
+
+// Entrada das seções ao rolar. O estado fica no React (e não só em classList),
+// para a animação não 'resetar' quando a prévia re-renderiza durante a edição.
+function useReveal(blocks, enabled) {
+  const [seen, setSeen] = useState(() => new Set(blocks.slice(0, 1).map((b) => b.id)))
+  const key = blocks.map((b) => b.id).join()
+  useEffect(() => {
+    if (!enabled) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
+      setSeen(new Set(blocks.map((b) => b.id)))
+      return
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        const ids = entries.filter((e) => e.isIntersecting).map((e) => e.target.dataset.block)
+        if (!ids.length) return
+        entries.forEach((e) => e.isIntersecting && io.unobserve(e.target))
+        setSeen((prev) => {
+          const n = new Set(prev)
+          ids.forEach((i) => n.add(i))
+          return n
+        })
+      },
+      { rootMargin: '0px 0px -6% 0px', threshold: 0.06 },
+    )
+    const t = setTimeout(() => document.querySelectorAll('.cs-block.cs-anim:not(.is-in)[data-block]').forEach((el) => io.observe(el)), 30)
+    return () => {
+      clearTimeout(t)
+      io.disconnect()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, enabled])
+  return seen
 }
 
 export default function SiteRenderer({ project, editing, selected, selImg, onSelect, onSelectImage, onEdit, onMedia, device, onAction, cartCount = 0, signedIn, page, no3d }) {
@@ -486,7 +745,9 @@ export default function SiteRenderer({ project, editing, selected, selImg, onSel
     '--cs-font': `'${th.font} Variable', '${th.font}', system-ui, sans-serif`,
     '--cs-head': `'${th.headingFont || th.font} Variable', '${th.headingFont || th.font}', system-ui, sans-serif`,
   }
-  const ctx = { editing, selImg, onSelectImage, onEdit, onMedia, onAction, no3d }
+  const ctx = { editing, selImg, onSelectImage, onEdit, onMedia, onAction, no3d, project }
+  const seen = useReveal(project.blocks, !no3d && !page)
+  const anim = !no3d && !page
   const navBlocks = project.blocks.filter((b) => !['hero', 'footer', 'marquee', 'stats', 'cta'].includes(b.type) && b.props.title).slice(0, 4)
   const hasShop = project.blocks.some((b) => b.type === 'products' || b.type === 'menu')
   const hasLogin = project.blocks.some((b) => b.type === 'login')
@@ -520,7 +781,7 @@ export default function SiteRenderer({ project, editing, selected, selImg, onSel
               return (
                 <div
                   key={b.id}
-                  className={`cs-block bg-${s.bg || 'auto'} pad-${s.pad || 'm'} align-${s.align || 'left'} ${editing ? 'is-editing' : ''} ${selected === b.id ? 'is-selected' : ''}`}
+                  className={`cs-block bg-${s.bg || 'auto'} pad-${s.pad || 'm'} align-${s.align || 'left'} ${editing ? 'is-editing' : ''} ${selected === b.id ? 'is-selected' : ''} ${anim ? 'cs-anim' : ''} ${anim && seen.has(b.id) ? 'is-in' : ''}`}
                   onClickCapture={() => editing && onSelect?.(b.id)}
                   data-block={b.id}
                   data-part={editing ? BLOCK_LABEL(b.type) : undefined}

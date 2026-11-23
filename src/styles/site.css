@@ -191,7 +191,7 @@
 .cs-cta .cs-h2 { font-size: clamp(30px, 6cqi, 84px); max-width: 14em; }
 .cs-block.align-center .cs-cta .cs-lead { margin-inline: auto; }
 
-.cs-footer { padding: 32px 5cqi; font-size: 14px; color: var(--sec-muted); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--sec-text) 10%, transparent); }
+
 
 /* ---- celular (pelo container) ---- */
 @container (max-width: 640px) {
@@ -240,3 +240,156 @@
 .cs-videosec.is-wide .cs-videosec-copy { max-width: 720px; }
 .align-center .cs-videosec.is-wide .cs-videosec-copy { margin: 0 auto; }
 .is-mobile .cs-videosec.is-split { grid-template-columns: 1fr; }
+
+/* =========================================================
+   Seções mais animadas (entrada ao rolar, carrosséis, rodapé)
+   ========================================================= */
+.cs-site { --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1); }
+
+/* entrada ao rolar: cada filho direto sobe e aparece; grades entram em sequência */
+.cs-block.cs-anim > * > * { transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out), filter 0.9s var(--ease-out); }
+.cs-block.cs-anim:not(.is-in) > * > * { opacity: 0; transform: translateY(46px); filter: blur(4px); }
+.cs-block.cs-anim > * > :nth-child(2) { transition-delay: 0.1s; }
+.cs-block.cs-anim > * > :nth-child(3) { transition-delay: 0.2s; }
+.cs-block.cs-anim .cs-grid > *, .cs-block.cs-anim .cs-gallery > * { transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out), box-shadow 0.4s, translate 0.4s var(--ease-out); transition-delay: calc(0.15s + var(--i, 0) * 0.08s); }
+.cs-block.cs-anim .cs-grid > :nth-child(2), .cs-block.cs-anim .cs-gallery > :nth-child(2) { --i: 1; }
+.cs-block.cs-anim .cs-grid > :nth-child(3), .cs-block.cs-anim .cs-gallery > :nth-child(3) { --i: 2; }
+.cs-block.cs-anim .cs-grid > :nth-child(4), .cs-block.cs-anim .cs-gallery > :nth-child(4) { --i: 3; }
+.cs-block.cs-anim .cs-grid > :nth-child(5), .cs-block.cs-anim .cs-gallery > :nth-child(5) { --i: 4; }
+.cs-block.cs-anim .cs-grid > :nth-child(6), .cs-block.cs-anim .cs-gallery > :nth-child(6) { --i: 5; }
+.cs-block.cs-anim:not(.is-in) .cs-grid > *, .cs-block.cs-anim:not(.is-in) .cs-gallery > * { opacity: 0; transform: translateY(40px) scale(0.96); }
+
+/* fotos ganham zoom suave ao passar o mouse */
+.cs-card .cs-img-clip, .cs-gallery .cs-img-clip, .is-services .cs-img-clip { transition: scale 0.9s var(--ease-out); }
+.cs-card:hover .cs-img-clip, .cs-gallery .cs-img:hover .cs-img-clip, .is-services .cs-item:hover .cs-img-clip { scale: 1.04; }
+.cs-card .cs-img, .cs-gallery .cs-img, .is-services .cs-img { overflow: hidden; border-radius: var(--cs-radius); }
+
+/* cabeçalho de seção com texto de apoio */
+.cs-sec-head { display: grid; gap: 1.4cqi; margin-bottom: 4cqi; }
+.cs-sec-head .cs-h2 { margin-bottom: 0 !important; }
+.cs-sec-lead { max-width: 46em; color: var(--sec-muted); font-size: clamp(15px, 1.5cqi, 19px); }
+.align-center .cs-sec-head { justify-items: center; text-align: center; }
+
+/* ---------- destaques (serviços) ---------- */
+.is-services.is-cards .cs-item { position: relative; overflow: hidden; padding: 30px 28px 26px; gap: 12px; }
+.is-services.is-cards .cs-item::before { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--cs-accent) 22%, transparent), transparent 60%); opacity: 0; transition: opacity 0.5s; pointer-events: none; }
+.is-services.is-cards .cs-item:hover { translate: 0 -6px; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--cs-accent) 60%, transparent), 0 24px 50px -24px color-mix(in srgb, var(--cs-accent) 55%, transparent); }
+.is-services.is-cards .cs-item:hover::before { opacity: 1; }
+.is-services.is-cards .cs-item .cs-img { aspect-ratio: 16 / 10; margin: -30px -28px 6px; border-radius: 0; }
+.cs-badge { position: relative; justify-self: start; font: 700 12px var(--cs-head); letter-spacing: 0.08em; padding: 6px 10px; border-radius: 999px; background: color-mix(in srgb, var(--cs-accent) 16%, transparent); color: var(--sec-text); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--cs-accent) 45%, transparent); }
+.cs-item-body { position: relative; display: grid; gap: 10px; }
+.cs-more { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-weight: 600; font-size: 14px; color: var(--cs-accent); transition: gap 0.3s var(--ease-out); }
+.bg-accent .cs-more { color: var(--sec-text); }
+.cs-item:hover .cs-more { gap: 12px; }
+
+/* destaque grande: linhas em zigue-zague com foto grande */
+.is-services.is-feature .cs-grid { grid-template-columns: 1fr; gap: 7cqi; }
+.is-services.is-feature .cs-item { grid-template-columns: 1.15fr 1fr; gap: 5cqi; align-items: center; padding: 0; background: none; box-shadow: none; }
+.is-services.is-feature .cs-item:nth-child(even) .cs-img { order: 2; }
+.is-services.is-feature .cs-img { aspect-ratio: 4 / 3; }
+.is-services.is-feature .cs-h3 { font-size: clamp(24px, 3.4cqi, 44px); line-height: 1.05; }
+.is-services.is-feature .cs-p { font-size: clamp(15px, 1.5cqi, 19px); color: var(--sec-muted); }
+
+/* mosaico: primeiro item grande com texto sobre a foto */
+.is-services.is-bento .cs-grid { grid-template-columns: repeat(4, 1fr); grid-auto-rows: 15cqi; gap: 14px; }
+.is-services.is-bento .cs-item { position: relative; padding: 0; overflow: hidden; background: #000; box-shadow: none; grid-column: span 2; grid-row: span 2; }
+.is-services.is-bento .cs-item:nth-child(1) { grid-row: span 4; }
+.is-services.is-bento .cs-item .cs-img { position: absolute; inset: 0; border-radius: 0; aspect-ratio: auto !important; height: 100%; }
+.is-services.is-bento .cs-item::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0) 62%); pointer-events: none; }
+.is-services.is-bento .cs-item-body { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; padding: 22px; color: #fff; }
+.is-services.is-bento .cs-item-body .cs-p { color: rgba(255, 255, 255, 0.82); }
+.is-services.is-bento .cs-more { color: #fff; }
+.is-services.is-bento .cs-item:nth-child(1) .cs-h3 { font-size: clamp(22px, 3cqi, 38px); }
+
+/* ---------- carrossel ---------- */
+.cs-carsec-head { display: grid; gap: 1.2cqi; margin-bottom: 3cqi; }
+.cs-carsec-head .cs-h2 { margin-bottom: 0 !important; }
+.align-center .cs-carsec-head { justify-items: center; text-align: center; }
+.cs-car { position: relative; }
+.cs-car-stage { position: relative; height: clamp(260px, 38cqi, 520px); perspective: 1600px; display: grid; place-items: center; user-select: none; touch-action: pan-y; }
+.cs-car-card { position: absolute; width: clamp(200px, 34cqi, 460px); aspect-ratio: 4 / 3; transition: transform 0.9s var(--ease-out), opacity 0.6s, filter 0.6s; cursor: pointer; filter: brightness(0.62) saturate(0.85); }
+.cs-car-card.is-on { filter: none; cursor: default; }
+.cs-car-card .cs-img { width: 100%; height: 100%; border-radius: var(--cs-radius); overflow: hidden; box-shadow: 0 30px 60px -28px rgba(0, 0, 0, 0.7); }
+.cs-car-card .cs-img-clip { height: 100%; }
+.cs-car-card.is-on .cs-img-clip img { animation: carZoom 6s ease-out both; }
+@keyframes carZoom { from { transform: scale(1.12); } }
+/* 3D: anel */
+.cs-car.is-3d .cs-car-stage { perspective: 1800px; }
+.cs-car-ring { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform-style: preserve-3d; transition: transform 1s cubic-bezier(0.65, 0, 0.25, 1); --cw: clamp(180px, 28cqi, 380px); --r: calc(var(--cw) * 0.78 / tan(180deg / var(--n)) + 30px); }
+.cs-car.is-3d .cs-car-card { width: var(--cw); left: calc(var(--cw) / -2); top: calc(var(--cw) * -0.375); }
+/* slider grande */
+.cs-car.is-slider .cs-car-stage { display: block; overflow: hidden; height: clamp(300px, 46cqi, 620px); border-radius: var(--cs-radius); }
+.cs-car-track { display: flex; width: 100%; height: 100%; transition: transform 1s cubic-bezier(0.65, 0, 0.25, 1); }
+.cs-car-slide { position: relative; flex: 0 0 100%; width: 100%; height: 100%; }
+.cs-car-slide .cs-img { position: absolute; inset: 0; height: 100%; aspect-ratio: auto !important; }
+.cs-car-slide .cs-img-clip { height: 100%; }
+.cs-car-slide.is-on .cs-img-clip img { animation: carZoom 7s ease-out both; }
+.cs-car-slide::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0) 55%); pointer-events: none; }
+.cs-car-cap { position: absolute; left: 4cqi; right: 4cqi; bottom: 4cqi; z-index: 1; color: #fff; display: grid; gap: 8px; max-width: 640px; }
+.cs-car-cap .cs-h3 { font-size: clamp(22px, 3.4cqi, 46px); line-height: 1.05; }
+.cs-car-cap .cs-p { color: rgba(255, 255, 255, 0.85); }
+.cs-car-slide.is-on .cs-car-cap > * { animation: capIn 0.9s 0.25s var(--ease-out) both; }
+.cs-car-slide.is-on .cs-car-cap > :nth-child(2) { animation-delay: 0.38s; }
+@keyframes capIn { from { opacity: 0; transform: translateY(24px); } }
+/* legenda, navegação e barra de tempo */
+.cs-car-info { text-align: center; display: grid; gap: 6px; justify-items: center; margin-top: 2.4cqi; min-height: 70px; }
+.cs-car-info > * { animation: capIn 0.7s var(--ease-out) both; }
+.cs-car-info .cs-p { color: var(--sec-muted); max-width: 36em; }
+.cs-car-nav { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 18px; }
+.cs-car-arrow { width: 46px; height: 46px; border-radius: 50%; border: 0; display: grid; place-items: center; background: color-mix(in srgb, var(--sec-text) 8%, transparent); color: var(--sec-text); cursor: pointer; transition: background 0.25s, transform 0.25s; }
+.cs-car-arrow:hover { background: var(--cs-accent); color: var(--cs-on-accent); transform: scale(1.06); }
+.cs-car-dots { display: flex; gap: 6px; }
+.cs-car-dots button { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 4px; background: color-mix(in srgb, var(--sec-text) 22%, transparent); cursor: pointer; transition: width 0.35s var(--ease-out), background 0.35s; }
+.cs-car-dots button.is-on { width: 28px; background: var(--cs-accent); }
+.cs-car-timer { display: block; width: 110px; height: 2px; margin: 14px auto 0; border-radius: 2px; background: var(--cs-accent); transform-origin: left; animation: carTimer linear both; }
+@keyframes carTimer { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* ---------- galeria em faixa animada ---------- */
+.cs-gmarq { display: grid; gap: 14px; margin-inline: -5cqi; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.cs-gmarq-row { overflow: hidden; }
+.cs-gmarq-track { display: flex; gap: 14px; width: max-content; animation: gmarq 38s linear infinite; }
+.cs-gmarq-row.is-rev .cs-gmarq-track { animation-direction: reverse; animation-duration: 46s; }
+.cs-gmarq:hover .cs-gmarq-track { animation-play-state: paused; }
+.cs-gmarq .cs-img { width: clamp(180px, 24cqi, 340px); aspect-ratio: 4 / 3; flex: none; border-radius: var(--cs-radius); overflow: hidden; }
+.cs-gmarq .cs-img-clip img { width: 100%; height: 100%; object-fit: cover; }
+@keyframes gmarq { to { transform: translateX(-50%); } }
+
+/* ---------- números ---------- */
+.cs-stats .cs-stat { padding: 2cqi 0; border-top: 2px solid color-mix(in srgb, var(--cs-accent) 70%, transparent); }
+.cs-stats .cs-stat strong { font-variant-numeric: tabular-nums; }
+
+/* ---------- rodapé completo ---------- */
+.cs-footer { padding: 7cqi 5cqi 0; font-size: 15px; color: var(--sec-muted); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--sec-text) 10%, transparent); overflow: hidden; }
+.cs-f-top { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.1fr; gap: 4cqi; }
+.cs-f-brand { display: grid; gap: 14px; align-content: start; }
+.cs-f-name { font-family: var(--cs-head); font-size: clamp(22px, 2.6cqi, 34px); line-height: 1; color: var(--sec-text); letter-spacing: -0.02em; }
+.cs-f-about { max-width: 30em; line-height: 1.55; }
+.cs-f-social { display: flex; gap: 8px; }
+.cs-f-social span { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; color: var(--sec-text); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sec-text) 20%, transparent); transition: background 0.25s, color 0.25s, transform 0.25s; }
+.cs-f-social span:hover { background: var(--cs-accent); color: var(--cs-on-accent); transform: translateY(-3px); }
+.cs-f-col, .cs-f-cta { display: grid; gap: 10px; align-content: start; }
+.cs-f-col b, .cs-f-cta b { color: var(--sec-text); font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+.cs-f-col button, .cs-f-col span { justify-self: start; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; transition: color 0.2s, translate 0.25s; }
+.cs-f-col button { cursor: pointer; }
+.cs-f-col button:hover { color: var(--sec-text); translate: 4px 0; }
+.cs-f-cta .cs-btn { justify-self: start; }
+.cs-f-word { margin: 6cqi -1cqi -1.6cqi; line-height: 0.8; white-space: nowrap; font-family: var(--cs-head); font-weight: 800; font-size: clamp(60px, 15cqi, 240px); letter-spacing: -0.04em; text-align: center; color: transparent; -webkit-text-stroke: 1px color-mix(in srgb, var(--sec-text) 22%, transparent); user-select: none; overflow: hidden; }
+.cs-f-word span { display: inline-block; background: linear-gradient(90deg, transparent 30%, color-mix(in srgb, var(--cs-accent) 70%, transparent) 50%, transparent 70%) 0 0 / 250% 100% no-repeat; -webkit-background-clip: text; background-clip: text; animation: fShine 6s ease-in-out infinite; }
+@keyframes fShine { 0% { background-position: 120% 0; } 60%, 100% { background-position: -120% 0; } }
+.cs-f-bottom { position: relative; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 22px 0 26px; margin-top: 2cqi; font-size: 13px; box-shadow: 0 -1px 0 color-mix(in srgb, var(--sec-text) 10%, transparent); }
+
+/* telas estreitas (a prévia "Celular" e containers pequenos) */
+@container (max-width: 700px) {
+  .cs-f-top { grid-template-columns: 1fr 1fr; }
+  .cs-f-brand { grid-column: 1 / -1; }
+  .is-services.is-feature .cs-item { grid-template-columns: 1fr; }
+  .is-services.is-feature .cs-item:nth-child(even) .cs-img { order: 0; }
+  .is-services.is-bento .cs-grid { grid-template-columns: 1fr; grid-auto-rows: 220px; }
+  .is-services.is-bento .cs-item, .is-services.is-bento .cs-item:nth-child(1) { grid-column: auto; grid-row: span 1; }
+  .cs-car-card { width: 62cqi; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cs-block.cs-anim > * > *, .cs-block.cs-anim .cs-grid > *, .cs-block.cs-anim .cs-gallery > * { transition: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
+  .cs-gmarq-track, .cs-f-word span, .cs-car-card.is-on .cs-img-clip img, .cs-car-slide.is-on .cs-img-clip img { animation: none; }
+}

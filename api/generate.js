@@ -54,7 +54,7 @@ export async function run({ mode, input }) {
     const r = await tryAI(provider, { mode, input: url.href, scan, extra })
     const ai = !!r.spec
     const spec = r.spec || heuristicSpec(scan, extra)
-    return { spec, images: scan.digest.images.map((i) => i.url), videos: (scan.digest.videos || []).map((v) => ({ url: v.url, poster: v.poster || '' })), meta: { ai, provider: ai ? PROVIDER_LABEL[provider] : null, aiError: r.error, source: scan.source, host: scan.host, read: { headings: scan.digest.headings.length, images: scan.digest.images.length, videos: (scan.digest.videos || []).length, colors: scan.digest.colors.top?.slice(0, 6) || [], fonts: [...(scan.digest.fonts.google || []), ...(scan.digest.fonts.declared || [])].slice(0, 3) } } }
+    return { spec, images: scan.digest.images.map((i) => i.url), videos: (scan.digest.videos || []).map((v) => ({ url: v.url, poster: v.poster || '' })), contact: scan.digest.contact || {}, meta: { ai, provider: ai ? PROVIDER_LABEL[provider] : null, aiError: r.error, source: scan.source, host: scan.host, read: { headings: scan.digest.headings.length, images: scan.digest.images.length, videos: (scan.digest.videos || []).length, colors: scan.digest.colors.top?.slice(0, 6) || [], fonts: [...(scan.digest.fonts.google || []), ...(scan.digest.fonts.declared || [])].slice(0, 3) } } }
   }
 
   const text = String(input || '').trim()

@@ -64,10 +64,13 @@ export const BLOCKS = {
       ['cards', 'Cartões'],
       ['list', 'Lista numerada'],
       ['images', 'Com fotos'],
+      ['feature', 'Destaque grande'],
+      ['bento', 'Mosaico'],
     ],
     defaults: {
       layout: 'cards',
       title: 'O que fazemos',
+      text: '',
       items: [
         { title: 'Serviço um', text: 'Descrição curta do serviço.', image: '' },
         { title: 'Serviço dois', text: 'Descrição curta do serviço.', image: '' },
@@ -97,6 +100,7 @@ export const BLOCKS = {
       ['grid', 'Grade'],
       ['bento', 'Mosaico'],
       ['strip', 'Faixa rolável'],
+      ['marquee', 'Faixa animada'],
     ],
     defaults: { layout: 'grid', title: 'Galeria', images: ['', '', '', '', '', ''] },
   },
@@ -171,6 +175,29 @@ export const BLOCKS = {
       ['split', 'Com texto ao lado'],
     ],
     defaults: { layout: 'wide', title: 'Veja como é', text: '', video: '', poster: '' },
+  },
+  carousel: {
+    label: 'Carrossel de fotos',
+    part: 'B8',
+    hint: 'Fotos girando: carrossel 3D, coverflow ou slider grande.',
+    needs: [],
+    layouts: [
+      ['coverflow', 'Coverflow'],
+      ['3d', 'Carrossel 3D'],
+      ['slider', 'Slider grande'],
+    ],
+    defaults: {
+      layout: 'coverflow',
+      title: 'Destaques',
+      text: '',
+      items: [
+        { title: 'Destaque um', text: 'Uma frase sobre esta foto.', image: '' },
+        { title: 'Destaque dois', text: 'Uma frase sobre esta foto.', image: '' },
+        { title: 'Destaque três', text: 'Uma frase sobre esta foto.', image: '' },
+        { title: 'Destaque quatro', text: 'Uma frase sobre esta foto.', image: '' },
+        { title: 'Destaque cinco', text: 'Uma frase sobre esta foto.', image: '' },
+      ],
+    },
   },
   team: {
     label: 'Equipe',
@@ -259,7 +286,7 @@ export const BLOCKS = {
     part: 'D5',
     hint: 'Contatos, redes e direitos.',
     needs: [],
-    defaults: { text: '© Seu negócio. Todos os direitos reservados.' },
+    defaults: { text: '© Seu negócio. Todos os direitos reservados.', about: '', phone: '', email: '', instagram: '', address: '' },
   },
 }
 

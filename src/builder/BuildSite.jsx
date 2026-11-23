@@ -9,7 +9,7 @@ import { parseVideo } from '../lib/video.js'
 
 const FLAG_ICON = { payments: 'pay', database: 'db', auth: 'lock', admin: 'panel', notifications: 'bell', integrations: 'plug', reports: 'chart', '3d': 'cube', mobile: 'phone', storage: 'image' }
 const GROUPS = { A: 'Estrutura', B: 'Conteúdo e vendas', C: 'Confiança', D: 'Extras e contato' }
-const TEXT_FIELDS = [['kicker', 'Frase pequena'], ['title', 'Título'], ['subtitle', 'Subtítulo'], ['text', 'Texto'], ['cta', 'Botão principal'], ['cta2', 'Segundo botão'], ['address', 'Endereço'], ['hours', 'Horário'], ['whatsapp', 'WhatsApp']]
+const TEXT_FIELDS = [['kicker', 'Frase pequena'], ['title', 'Título'], ['subtitle', 'Subtítulo'], ['text', 'Texto'], ['cta', 'Botão principal'], ['cta2', 'Segundo botão'], ['address', 'Endereço'], ['hours', 'Horário'], ['whatsapp', 'WhatsApp'], ['about', 'Sobre a empresa (rodapé)'], ['phone', 'Telefone / WhatsApp'], ['email', 'E-mail'], ['instagram', 'Instagram']]
 
 const scrollToBlock = (id) => document.querySelector(`[data-block="${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
@@ -241,7 +241,7 @@ function PieceTab({ block, dispatch }) {
           {fields.map(([k, label]) => (
             <label key={k} className="b-field">
               <span className="b-label">{label}</span>
-              {k === 'text' || k === 'subtitle' ? (
+              {k === 'text' || k === 'subtitle' || k === 'about' ? (
                 <textarea className="field is-sm" rows={3} value={p[k]} onChange={(e) => set({ [k]: e.target.value })} />
               ) : (
                 <input className="field is-sm" value={p[k]} placeholder={k === 'kicker' || k === 'cta2' ? 'vazio = não mostrar' : ''} onChange={(e) => set({ [k]: e.target.value })} />
