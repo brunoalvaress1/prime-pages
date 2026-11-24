@@ -847,6 +847,13 @@ function useReveal(blocks, enabled) {
   return seen
 }
 
+// Rótulo curto do menu: usa o título quando ele já é curto; senão, o nome da seção.
+const NAV_NAME = { about: 'Sobre', services: 'Serviços', menu: 'Cardápio', gallery: 'Galeria', carousel: 'Destaques', products: 'Produtos', booking: 'Agenda', pricing: 'Planos', steps: 'Como funciona', team: 'Equipe', testimonials: 'Depoimentos', faq: 'Dúvidas', blog: 'Artigos', contact: 'Contato', map: 'Onde estamos', login: 'Minha conta', video: 'Vídeo', model3d: 'Destaque' }
+function navLabel(b) {
+  const t = String(b.props.title || '').trim()
+  return t.length <= 16 || !NAV_NAME[b.type] ? t : NAV_NAME[b.type]
+}
+
 export default function SiteRenderer({ project, editing, selected, selImg, onSelect, onSelectImage, onEdit, onMedia, device, onAction, cartCount = 0, signedIn, page, no3d }) {
   const th = project.theme
   ensureFonts([th.font, th.headingFont])
@@ -875,10 +882,10 @@ export default function SiteRenderer({ project, editing, selected, selImg, onSel
           {onAction ? <button type="button" className="cs-nav-brand" onClick={() => onAction('home')}>{project.name}</button> : <strong>{project.name}</strong>}
           {onAction ? (
             <span className="cs-nav-links">
-              {navBlocks.map((b) => <button type="button" key={b.id} onClick={() => onAction('scroll', b.id)}>{b.props.title.split(' ').slice(0, 2).join(' ')}</button>)}
+              {navBlocks.map((b) => <button type="button" key={b.id} onClick={() => onAction('scroll', b.id)}>{navLabel(b)}</button>)}
             </span>
           ) : (
-            <span>{navBlocks.map((b) => b.props.title.split(' ').slice(0, 2).join(' ')).join('   ')}</span>
+            <span>{navBlocks.map((b) => navLabel(b)).join('   ')}</span>
           )}
           {onAction && hasLogin && <button type="button" className="cs-nav-icon" aria-label="Minha conta" onClick={() => onAction(signedIn ? 'account' : 'login-page')}><Icon name="lock" size={18} />{signedIn ? <small>Conta</small> : <small>Entrar</small>}</button>}
           {onAction && hasShop && <button type="button" className="cs-nav-icon" aria-label="Carrinho" onClick={() => onAction('cart')}><Icon name="pay" size={18} /><small>Carrinho</small>{cartCount > 0 && <i>{cartCount}</i>}</button>}

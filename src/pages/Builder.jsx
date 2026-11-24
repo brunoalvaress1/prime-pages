@@ -3,9 +3,9 @@ import { Link, useSearchParams } from 'react-router-dom'
 import Logo from '../components/Logo.jsx'
 import Icon from '../components/Icon.jsx'
 import { useBuilder } from '../builder/store.js'
-import { TEMPLATES, THEMES, BLANK } from '../data/templates.js'
+import { TEMPLATES, TEMPLATE_CATS, THEMES, BLANK } from '../data/templates.js'
 import { SYSTEMS } from '../data/systems.js'
-import { analyzeUrl, generateFromPrompt } from '../lib/generator.js'
+import { generateFromPrompt } from '../lib/generator.js'
 import BuildSite from '../builder/BuildSite.jsx'
 import BuildSystem from '../builder/BuildSystem.jsx'
 import Review from '../builder/Review.jsx'
@@ -41,8 +41,8 @@ function Working({ log, title }) {
 }
 
 function Start({ state, dispatch, initialTab, autoRun }) {
-  const [tab, setTab] = useState(initialTab || 'url')
-  const [url, setUrl] = useState(autoRun?.url || '')
+  const [tab, setTab] = useState(initialTab || 'template')
+  const [cat, setCat] = useState('')
   const [prompt, setPrompt] = useState(autoRun?.prompt || '')
   const [busy, setBusy] = useState(null)
   const [log, setLog] = useState([])
@@ -54,9 +54,8 @@ function Start({ state, dispatch, initialTab, autoRun }) {
     setLog([])
     setBusy(mode)
     try {
-      const fn = mode === 'url' ? analyzeUrl : generateFromPrompt
-      const r = await fn(input, (s) => setLog((l) => [...l, s]))
-      dispatch({ type: 'load-site', origin: mode, name: r.name, themeKey: r.themeKey, theme: r.theme, blocks: r.blocks, analysis: r.analysis, reference: mode === 'url' ? input : '', prompt: mode === 'prompt' ? input : '' })
+      const r = await generateFromPrompt(input, (s) => setLog((l) => [...l, s]))
+      dispatch({ type: 'load-site', origin: mode, name: r.name, themeKey: r.themeKey, theme: r.theme, blocks: r.blocks, analysis: r.analysis, reference: '', prompt: input })
     } catch (e) {
       setError(e.message)
     } finally {
@@ -67,22 +66,20 @@ function Start({ state, dispatch, initialTab, autoRun }) {
   useEffect(() => {
     if (ran.current || !autoRun) return
     ran.current = true
-    if (autoRun.url) run('url', autoRun.url)
-    else if (autoRun.prompt) run('prompt', autoRun.prompt)
+    if (autoRun.prompt) run('prompt', autoRun.prompt)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const tabs = [
-    ['url', 'Copiar um site', 'link', 'O mais usado'],
+    ['template', 'Modelo pronto', 'grid', `${TEMPLATES.length} modelos`],
     ['prompt', 'Descrever em texto', 'text', ''],
-    ['template', 'Modelo pronto', 'grid', ''],
     ['system', 'Sistema', 'system', ''],
     ['blank', 'Do zero', 'plus', ''],
   ]
 
   return (
     <div className="start">
-      {busy && <Working log={log} title={busy === 'url' ? 'Desmontando o site de referência' : 'Montando a partir do seu pedido'} />}
+      {busy && <Working log={log} title="Montando a partir do seu pedido" />}
       <div className="start-head">
         <h1>Por onde você quer começar?</h1>
         <p>Tudo que sair daqui é editável. Você pode trocar textos, fotos, cores e peças depois.</p>
@@ -99,17 +96,6 @@ function Start({ state, dispatch, initialTab, autoRun }) {
         </div>
 
         <div className="start-panel">
-          {tab === 'url' && (
-            <form className="start-form" onSubmit={(e) => { e.preventDefault(); run('url', url) }}>
-              <h2>Cole o site que você quer como base</h2>
-              <p>Nós lemos a estrutura dele (seções, cores, fontes, chamadas) e montamos um kit editável. Depois você troca tudo pelo que é seu.</p>
-              <div className="start-row">
-                <input className="field" inputMode="url" autoFocus placeholder="www.sitequeeugosto.com.br" value={url} onChange={(e) => setUrl(e.target.value)} aria-label="Endereço do site" />
-                <button className="btn" disabled={!url.trim() || busy}>Desmontar site <Icon name="arrow" size={16} /></button>
-              </div>
-              <p className="start-fine">Usamos o site só como referência de estrutura e estilo. Textos, imagens e marcas de terceiros não são copiados para o seu projeto final.</p>
-            </form>
-          )}
 
           {tab === 'prompt' && (
             <form className="start-form" onSubmit={(e) => { e.preventDefault(); run('prompt', prompt) }}>
@@ -130,8 +116,16 @@ function Start({ state, dispatch, initialTab, autoRun }) {
           {tab === 'template' && (
             <div>
               <h2>Escolha um modelo pronto</h2>
+              <p className="start-sub">{TEMPLATES.length} modelos para começar. Troque textos, fotos, cores e peças depois.</p>
+              <div className="tpl-cats" role="group" aria-label="Filtrar modelos por área">
+                {[['', 'Todos'], ...TEMPLATE_CATS].map(([id, label]) => (
+                  <button key={id || 'all'} type="button" aria-pressed={cat === id} className={cat === id ? 'is-on' : ''} onClick={() => setCat(id)}>
+                    {label}
+                  </button>
+                ))}
+              </div>
               <div className="tpl-grid">
-                {TEMPLATES.map((t) => (
+                {TEMPLATES.filter((t) => !cat || t.cat === cat).map((t) => (
                   <button key={t.id} className="tpl" onClick={() => dispatch({ type: 'load-site', origin: 'template', name: t.name, themeKey: t.theme, theme: THEMES[t.theme], blocks: t.blocks() })}>
                     <span className="tpl-img"><img src={t.cover} alt="" loading="lazy" /></span>
                     <span className="tpl-meta">
@@ -192,11 +186,11 @@ export default function Builder() {
   const [state, dispatch] = useBuilder()
   const [params, setParams] = useSearchParams()
   const [autoRun] = useState(() => {
-    const url = params.get('url')
     const prompt = params.get('prompt')
-    return url || prompt ? { url, prompt } : null
+    return prompt ? { prompt } : null
   })
-  const initialTab = params.get('start') || (autoRun?.prompt ? 'prompt' : 'url')
+  const start = params.get('start')
+  const initialTab = start && start !== 'url' ? start : autoRun?.prompt ? 'prompt' : 'template'
 
   const { user } = useAuth()
   const [saveState, setSaveState] = useState('')
@@ -212,7 +206,7 @@ export default function Builder() {
         else alert('Projeto não encontrado ou sem permissão para abrir.')
       })
     } else if (sys && SYSTEMS.some((s) => s.id === sys)) dispatch({ type: 'load-system', id: sys })
-    else if (params.get('url') || params.get('prompt') || params.get('start')) dispatch({ type: 'set', patch: { step: 'start' } })
+    else if (params.get('prompt') || params.get('start') || params.get('url')) dispatch({ type: 'set', patch: { step: 'start' } })
     if ([...params.keys()].length) setParams({}, { replace: true })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

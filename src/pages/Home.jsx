@@ -35,7 +35,7 @@ function useReveal() {
 function Hero() {
   const nav = useNavigate()
   const scrollRef = useRef(0)
-  const [mode, setMode] = useState('url')
+  const [mode, setMode] = useState('template')
   const [value, setValue] = useState('')
 
   useEffect(() => {
@@ -61,15 +61,14 @@ function Hero() {
             <em>peça por peça.</em>
           </h1>
           <p className="hero-lead">
-            A Prime Page faz sites e sistemas à mão para negócios de Leme e região. Aqui você mesmo monta o seu: parte de um site que você gosta, de um modelo ou do que escrever, e manda para orçamento.
+            A Prime Page faz sites e sistemas à mão para negócios de Leme e região. Aqui você mesmo monta o seu: escolhe um modelo pronto ou descreve o que imagina, ajusta peça por peça e manda para orçamento.
           </p>
 
           <form className="starter" onSubmit={submit}>
             <div className="starter-tabs" role="tablist" aria-label="Como você quer começar">
               {[
-                ['url', 'Copiar um site', 'link'],
-                ['prompt', 'Descrever', 'text'],
                 ['template', 'Modelo pronto', 'grid'],
+                ['prompt', 'Descrever', 'text'],
               ].map(([id, label, icon]) => (
                 <button key={id} type="button" role="tab" aria-selected={mode === id} className={mode === id ? 'is-on' : ''} onClick={() => setMode(id)}>
                   <Icon name={icon} size={16} /> {label}
@@ -77,9 +76,8 @@ function Hero() {
               ))}
             </div>
             <div className="starter-row">
-              {mode === 'url' && <input className="field" inputMode="url" placeholder="Cole o endereço, ex.: www.sitequeeugosto.com.br" value={value} onChange={(e) => setValue(e.target.value)} aria-label="Endereço do site de referência" />}
               {mode === 'prompt' && <input className="field" placeholder="Ex.: site para minha barbearia com agenda online, em preto e dourado" value={value} onChange={(e) => setValue(e.target.value)} aria-label="Descreva o site" />}
-              {mode === 'template' && <div className="field starter-note">{TEMPLATES.length} modelos: restaurante, clínica, salão, loja, oficina e mais.</div>}
+              {mode === 'template' && <div className="field starter-note">{TEMPLATES.length} modelos: restaurante, barbearia, clínica, pet shop, pousada e mais.</div>}
               <button className="btn" type="submit">
                 {mode === 'template' ? 'Ver modelos' : 'Montar'} <Icon name="arrow" size={16} />
               </button>
@@ -117,8 +115,8 @@ function Diagram({ step }) {
         <path d="M118 75h22 M134 69l6 6-6 6" {...s} />
         <rect x="150" y="20" width="76" height="110" rx="6" {...s} className="d-mold" />
         <path d="M150 36h76 M160 50h40 M160 60h28 M160 76h56v40h-56z" {...s} className="d-mold" />
-        <text x="150" y="146" className="d-label">BASE COPIADA</text>
-        <text x="14" y="146" className="d-label">SITE DE REFERÊNCIA</text>
+        <text x="150" y="146" className="d-label">SEU SITE</text>
+        <text x="14" y="146" className="d-label">MODELO</text>
       </svg>
     )
   if (step === 2)
@@ -150,7 +148,7 @@ function Diagram({ step }) {
 
 function Manual() {
   const steps = [
-    { n: 1, title: 'Escolha a base', text: 'Cole o endereço de um site que você gosta e nós desmontamos a estrutura dele para virar o seu ponto de partida. Ou comece de um modelo pronto, do que você escrever ou do zero.' },
+    { n: 1, title: 'Escolha a base', text: 'São ' + TEMPLATES.length + ' modelos prontos, de restaurante a energia solar, cada um com o seu estilo. Prefere outro caminho? Descreva o que imagina ou comece do zero.' },
     { n: 2, title: 'Encaixe e personalize', text: 'Adicione, tire e reordene peças. Clique no texto para reescrever, envie suas fotos, troque cores e fontes, coloque um objeto 3D. Veja no computador e no celular.' },
     { n: 3, title: 'Envie para orçamento', text: 'O modelo vai para o nosso WhatsApp com um resumo técnico: se precisa de pagamento online, banco de dados, login, painel. Assim o orçamento sai certo.' },
   ]
@@ -339,8 +337,7 @@ function QuotePreview() {
     const sample = {
       kind: 'site',
       name: 'Studio Bela',
-      origin: 'url',
-      reference: 'www.exemplo-de-salao.com.br',
+      origin: 'template',
       themeKey: 'beleza',
       theme: THEMES.beleza,
       blocks: ['hero', 'services', 'gallery', 'booking', 'products', 'footer'].map((t) => makeBlock(t)),
@@ -383,7 +380,7 @@ function QuotePreview() {
 
 const FAQ = [
   ['Montar aqui tem custo?', 'Não. Você monta, testa e só envia para orçamento se quiser. O valor final vem da equipe, com base no modelo e no resumo técnico.'],
-  ['Posso copiar qualquer site?', 'Você usa o site como referência de estrutura e estilo. A Prime Page reconstrói tudo do zero com os seus textos, imagens e marca; não copiamos conteúdo nem marca de terceiros.'],
+  ['E se nenhum modelo for a cara do meu negócio?', 'Todo modelo muda inteiro: cores, fontes, fotos, textos e peças. Se mesmo assim faltar algo, descreva no pedido e a equipe desenha do jeito que você precisa.'],
   ['O site fica igual ao que eu montei?', 'O modelo é o ponto de partida. A gente refina o desenho, escreve os textos se você quiser e programa tudo à mão, responsivo e rápido.'],
   ['Quanto tempo leva?', 'Sites simples ficam prontos em cerca de 7 dias. Sistemas variam conforme os módulos, e o prazo vem junto com o orçamento.'],
   ['Preciso ter domínio e hospedagem?', 'Não. Ajudamos a registrar o domínio e configuramos toda a hospedagem.'],
